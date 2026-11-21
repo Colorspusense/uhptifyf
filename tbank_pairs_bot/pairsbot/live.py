@@ -84,6 +84,8 @@ class PaperExecutor:
 class TBankExecutor:
     """Real orders through the T-Bank API (sandbox or production account)."""
 
+    SELL_WAIT, CANCEL_WAIT, RECHECK_WAIT = 60, 15, 30  # seconds
+
     def __init__(self, cfg, client, account_id: str):
         self.cfg, self.client, self.account_id = cfg, client, account_id
 
@@ -119,7 +121,7 @@ class TBankExecutor:
                 self.client.cancel_order(self.account_id, s["order_id"] or order_id)
             except Exception as e:  # it may have filled in the meantime
                 log.warning("cancel of order %s failed: %s", order_id, e)
-            s = self._wait(order_id, 15, by_request)
+            s = self._wait(order_id, self.CANCEL_WAIT, by_request)
             if not s["status"].endswith(_DONE):
                 raise RuntimeError(f"order {order_id} is still active after the cancel request")
         if s["lots"] <= 0:
@@ -147,7 +149,7 @@ class TBankExecutor:
         from .tbank import TBankError
 
         try:
-            s = self._wait(key, 30, True)
+            s = self._wait(key, self.RECHECK_WAIT, True)
         except TBankError as e:
             if e.not_found:  # it never reached the broker
                 return ("done", 0, 0.0, 0.0)
@@ -182,10 +184,10 @@ class TBankExecutor:
         state, settled = None, False  # settled = it is certain that no sell order is still working
         try:
             self.client.post_order(self.account_id, inst["uid"], lots, False, None, key)
-            state = self._wait(key, 60, True)
+            state = self._wait(key, self.SELL_WAIT, True)
             if not state["status"].endswith(_DONE):  # a market order that hangs: take it back
                 self.client.cancel_order(self.account_id, state["order_id"])
-                state = self._wait(key, 15, True)
+                state = self._wait(key, self.CANCEL_WAIT, True)
             settled = state["status"].endswith(_DONE)
             if not settled:
                 raise RuntimeError(f"sell of {pos['ticker']} is stuck (status {state['status']}); check the terminal")

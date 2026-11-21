@@ -26,6 +26,8 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(live, "tqs_score", lambda *a: 90)
     monkeypatch.setattr(live, "pair_broken", lambda s, st: False)
     monkeypatch.setattr(time, "sleep", lambda s: None)
+    monkeypatch.setattr(TBankExecutor, "SELL_WAIT", 0)
+    monkeypatch.setattr(TBankExecutor, "RECHECK_WAIT", 0)
     cfg.stats.exit_z = 99.0
     fake = FakeTBank(cfg, lots={t: 10 for t in cfg.tickers})
 

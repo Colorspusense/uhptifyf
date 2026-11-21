@@ -26,6 +26,7 @@ from .config import ROOT, load_config, load_secret
 from .data import DailyCache, make_provider, now_msk
 
 MODES = ("paper", "sandbox", "live")
+API_VERSION = 2  # ui.html checks this: an interface left running across an update must be restarted
 
 
 class ApiError(Exception):
@@ -149,7 +150,7 @@ class App:
                         "cash": st.get("cash"), "last_cycle": st.get("last_cycle")}
             held |= {p["ticker"] for p in modes[m]["positions"]}
         source = cfg.general.data_source
-        return {"time": now.isoformat(timespec="seconds"), "in_session": in_session(cfg, now),
+        return {"time": now.isoformat(timespec="seconds"), "in_session": in_session(cfg, now), "api": API_VERSION,
                 "token_set": bool(token), "account_id_set": bool(load_secret("TBANK_ACCOUNT_ID", self.root)),
                 "sandbox_token_set": bool(load_secret("TBANK_SANDBOX_TOKEN", self.root)),
                 "source": ("tbank" if token else "moex") if source == "auto" else source,

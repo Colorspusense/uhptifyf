@@ -146,6 +146,7 @@ details summary{cursor:pointer;color:var(--muted)}
 <script>
 "use strict";
 const TOKEN = "__API_TOKEN__";
+const API_VERSION = 2;
 
 /* ---------- localization: English strings are the keys ---------- */
 const RU = {
@@ -239,7 +240,8 @@ const RU = {
   "Its result was not recorded. The bot settles it on the next cycle before opening anything new.": "Её результат не был записан. Бот разберётся с ней в следующем цикле, прежде чем открывать новые позиции.",
   "Sandbox token": "Токен песочницы", "saved": "сохранён", "if issued separately": "если выпущен отдельно",
   "manual": "вручную", "external": "продано вне бота",
-  "Stop-loss": "Стоп-лосс",
+  "Stop-loss": "Стоп-лосс", "The bot was updated": "Бот обновлён",
+  "Close the interface window and start ui.bat again to finish the update.": "Закройте окно интерфейса и снова запустите ui.bat, чтобы завершить обновление.",
   "Date": "Дата", "β": "β", "TQS": "TQS",
   "General": "Общие", "Capital and market data": "Капитал и источник данных",
   "Screen 1 · statistics": "Экран 1 · статистика", "Correlation, cointegration, β and Z-score thresholds": "Пороги корреляции, коинтеграции, β и Z-score",
@@ -540,6 +542,7 @@ VIEWS.dashboard = () => {
   const o = S.ov;
   const seg = `<div class="seg">${Object.keys(MODES).map(m => `<button data-act="mode" data-v="${m}" class="${S.mode === m ? "on" : ""}">${t(MODES[m][0])}</button>`).join("")}</div>`;
   if (!o) return `<div class="head"><h1>${t("Dashboard")}</h1></div><div class="card empty"><span class="spin"></span>${t("Loading…")}</div>`;
+  if (o.api !== API_VERSION) return `<div class="head"><h1>${t("Dashboard")}</h1></div><div class="banner"><div><b>${t("The bot was updated")}</b> <span class="muted">· ${t("Close the interface window and start ui.bat again to finish the update.")}</span></div></div>`;
   const m = o.modes[S.mode], rk = m.risk || {}, pos = m.positions, cfg = o.config;
   const last = p => o.quotes[p.ticker] ?? p.entry_price;
   const value = pos.reduce((s, p) => s + p.qty * last(p), 0);
