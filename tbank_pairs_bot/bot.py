@@ -8,7 +8,7 @@ import os
 import sys
 from datetime import date
 
-from pairsbot.config import load_config, load_token
+from pairsbot.config import load_config, load_secret, load_token
 from pairsbot.data import make_provider
 
 
@@ -66,7 +66,7 @@ def _engine(cfg, mode: str, source: str | None = None):
     provider = make_provider(cfg, token, "tbank", sandbox=(mode == "sandbox"))
     client = provider.client
     accounts = client.accounts()
-    wanted = os.environ.get("TBANK_ACCOUNT_ID")
+    wanted = load_secret("TBANK_ACCOUNT_ID", cfg.root)
     if mode == "sandbox" and not accounts:
         account_id = client.open_sandbox_account(cfg.general.capital)
         print(f"Opened sandbox account {account_id} with {cfg.general.capital:,.0f} RUB")
@@ -150,7 +150,16 @@ def main() -> None:
     p.add_argument("--reset-halt", action="store_true", help="clear a trading pause after your review")
     p.set_defaults(fn=cmd_status)
 
+    p = sub.add_parser("ui", help="open the web interface in your browser")
+    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--no-browser", action="store_true")
+
     args = ap.parse_args()
+    if args.command == "ui":  # the interface must open even when config.toml needs fixing
+        from pairsbot.ui_server import serve
+
+        serve(args.config, args.port, not args.no_browser)
+        return
     args.fn(load_config(args.config), args)
 
 

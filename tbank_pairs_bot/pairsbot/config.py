@@ -164,13 +164,17 @@ def load_config(path: str | os.PathLike | None = None) -> Config:
     return cfg
 
 
-def load_token(root: Path = ROOT) -> str | None:
-    """Token comes from the TBANK_TOKEN environment variable or the .env file, never from config."""
-    tok = os.environ.get("TBANK_TOKEN")
+def load_secret(name: str, root: Path = ROOT) -> str | None:
+    """Secrets come from the environment or the .env file, never from config.toml."""
+    value = os.environ.get(name)
     env = root / ".env"
-    if not tok and env.exists():
+    if not value and env.exists():
         for line in env.read_text(encoding="utf-8").splitlines():
             k, _, v = line.partition("=")
-            if k.strip() == "TBANK_TOKEN":
-                tok = v.strip().strip('"').strip("'")
-    return tok or None
+            if k.strip() == name:
+                value = v.strip().strip('"').strip("'")
+    return value or None
+
+
+def load_token(root: Path = ROOT) -> str | None:
+    return load_secret("TBANK_TOKEN", root)

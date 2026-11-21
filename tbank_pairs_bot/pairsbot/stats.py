@@ -51,6 +51,18 @@ def coint_pvalue(la: np.ndarray, lb: np.ndarray) -> float:
     return p if math.isfinite(p) else 1.0
 
 
+def z_history(la: np.ndarray, lb: np.ndarray, st, n: int = 250) -> list:
+    """Z-score for each of the last n days, computed with only the data available on that day."""
+    out = []
+    first = max(st.beta_window + 1, st.z_window, len(la) - n + 1)
+    for end in range(first, len(la) + 1):
+        beta = _beta(np.diff(la[end - st.beta_window - 1:end]), np.diff(lb[end - st.beta_window - 1:end]))
+        spread = la[end - st.z_window:end] - beta * lb[end - st.z_window:end]
+        sd = spread.std(ddof=1)
+        out.append(float((spread[-1] - spread.mean()) / sd) if math.isfinite(beta) and sd > 0 else float("nan"))
+    return out
+
+
 @dataclass
 class Snapshot:
     """Statistics of the pair "buy A against B" on one day."""

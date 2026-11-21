@@ -160,7 +160,7 @@ class Engine:
         now = now_msk()
         today = now.date()
         closes, last = self._closes(today)
-        mstate = market_state(closes[cfg.general.index_ticker]).iloc[-1]
+        mstate = self.last_market = market_state(closes[cfg.general.index_ticker]).iloc[-1]
         positions = self.state["positions"]
 
         if trade:
@@ -238,6 +238,7 @@ class Engine:
                 if self._open(row, snap, buy, other, sector, factor, book, last, equity, cash, today):
                     held |= {buy, other}
                     equity, cash = self.exec.account(last)
+            self.state["last_cycle"] = now.isoformat(timespec="seconds")
             self.save()
         return rows
 
@@ -327,7 +328,14 @@ def in_session(cfg, now: datetime) -> bool:
 def run_loop(engine: Engine, once: bool = False) -> None:
     cfg = engine.cfg
     log.info("mode %s, data %s, %d open position(s)", engine.mode, engine.p.name, len(engine.state["positions"]))
+    # The web interface asks for a clean stop by creating this file; it is honoured between cycles.
+    stop = engine.state_path.with_suffix(".stop")
+    stop.unlink(missing_ok=True)
     while True:
+        if stop.exists():
+            stop.unlink(missing_ok=True)
+            log.info("stop requested, exiting")
+            return
         now = now_msk()
         if once or in_session(cfg, now):
             try:
@@ -339,4 +347,7 @@ def run_loop(engine: Engine, once: bool = False) -> None:
             log.debug("outside the trading session")
         if once:
             return
-        time.sleep(cfg.live.poll_seconds)
+        waited = 0
+        while waited < cfg.live.poll_seconds and not stop.exists():
+            time.sleep(1)
+            waited += 1

@@ -8,3 +8,4 @@ journal/
 logs/
 reports/
 certs/_bundle.pem
+config.toml.bak

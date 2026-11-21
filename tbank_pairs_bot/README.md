@@ -9,6 +9,18 @@ This is software, not investment advice. Profit is not guaranteed; run it in sim
 
 ## Quick start (Windows)
 
+Double-click `ui.bat`. It installs the dependencies on the first run, starts the bot's local
+interface and opens it in your browser at http://127.0.0.1:8765. Keep its window open while you work;
+close it (or press Ctrl+C) to stop.
+
+The interface covers everything: start and stop paper / sandbox / live trading, positions and risk
+state, the scanner with Z-score charts, backtest and walk-forward, the trade journal, all settings
+and the T-Bank token. It is served only to this computer. `ui.html` cannot be opened directly as a
+file, because a web page on its own cannot run the bot.
+
+## Command line
+
+The same functions without the interface.
 Open the folder in a terminal. The leading `.\` is required in PowerShell and also works in cmd.
 
 ```
@@ -85,6 +97,7 @@ The backtest replays daily bars, so screen 3 is replaced by a daily proxy there.
 
 ```
 bot.py               command line
+ui.bat, ui.html      web interface (pairsbot/ui_server.py serves it)
 config.toml          every threshold
 pairsbot/stats.py    correlation, cointegration, beta, Z-score, half-life
 pairsbot/screens.py  three screens and TQS
