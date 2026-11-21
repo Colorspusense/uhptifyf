@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 import secrets
 import subprocess
 import sys
@@ -93,8 +94,22 @@ class App:
             return {}
 
     def _running(self, mode: str) -> bool:
+        from .live import lock_is_fresh
+
         p = self.procs.get(mode)
-        return bool(p) and p.poll() is None
+        # The lock also shows a process started from the command line or by an earlier interface.
+        return (bool(p) and p.poll() is None) or lock_is_fresh(self.root / "state" / f"{mode}.lock")
+
+    def _beat(self) -> None:
+        """Trading processes started here stop by themselves once this file is no longer refreshed."""
+        alive = self.root / "state" / "ui.alive"
+        while True:
+            try:
+                alive.parent.mkdir(exist_ok=True)
+                alive.touch()
+            except OSError:
+                pass
+            time.sleep(3)
 
     def _proc_error(self, mode: str) -> str:
         p = self.procs.get(mode)
@@ -130,6 +145,7 @@ class App:
             modes[m] = {"running": running, "error": self._proc_error(m),
                         "stopping": running and (self.root / "state" / f"{m}.stop").exists(),
                         "positions": st.get("positions", []), "risk": st.get("risk", {}),
+                        "closing": self._close_requests(m), "pending": st.get("pending"),
                         "cash": st.get("cash"), "last_cycle": st.get("last_cycle")}
             held |= {p["ticker"] for p in modes[m]["positions"]}
         source = cfg.general.data_source
@@ -255,17 +271,22 @@ class App:
         if mode != "paper" and not load_secret("TBANK_TOKEN", self.root):
             raise ApiError("add a T-Bank token in Settings first")
         self.cfg()
+        self._spawn(mode, bool(body.get("once")))
+        return {"ok": True}
+
+    def _spawn(self, mode: str, once: bool) -> None:
         (self.root / "logs").mkdir(exist_ok=True)
         (self.root / "state").mkdir(exist_ok=True)
         (self.root / "state" / f"{mode}.stop").unlink(missing_ok=True)
+        (self.root / "state" / "ui.alive").touch()
         cmd = [sys.executable, str(ROOT / "bot.py"), "--config", str(self.cfg_file), mode]
         cmd += ["--confirm-real-money"] if mode == "live" else []
-        cmd += ["--once"] if body.get("once") else []
+        cmd += ["--once"] if once else []
+        env = {**os.environ, "PAIRSBOT_UI_ALIVE": str(self.root / "state" / "ui.alive")}
         with (self.root / "logs" / f"ui_{mode}.err").open("w", encoding="utf-8") as err:
             self.procs[mode] = subprocess.Popen(
-                cmd, cwd=self.root, stdout=subprocess.DEVNULL, stderr=err, stdin=subprocess.DEVNULL,
+                cmd, cwd=self.root, stdout=subprocess.DEVNULL, stderr=err, stdin=subprocess.DEVNULL, env=env,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-        return {"ok": True}
 
     def post_trade_stop(self, body: dict) -> dict:
         mode = body.get("mode")
@@ -275,7 +296,38 @@ class App:
         (self.root / "state" / f"{mode}.stop").write_text("stop", encoding="utf-8")
         return {"ok": True}
 
+    def _close_requests(self, mode: str) -> list:
+        path = self.root / "state" / f"{mode}.close"
+        try:
+            return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        except (OSError, ValueError):
+            return []
+
+    def post_position_close(self, body: dict) -> dict:
+        """Manual exit (the guide's fourth ground: the fundamentals changed). The bot sells on its next cycle."""
+        from .live import in_session, write_atomic
+
+        mode, ticker = body.get("mode"), body.get("ticker")
+        if mode not in MODES or ticker not in {p["ticker"] for p in self._state(mode).get("positions", [])}:
+            raise ApiError("no such position")
+        if mode == "live" and body.get("confirm") != "LIVE":
+            raise ApiError("live trading needs the typed confirmation")
+        path = self.root / "state" / f"{mode}.close"
+        if body.get("cancel"):
+            left = [t for t in self._close_requests(mode) if t != ticker]
+            write_atomic(path, json.dumps(left)) if left else path.unlink(missing_ok=True)
+            return {"ok": True}
+        write_atomic(path, json.dumps(sorted(set(self._close_requests(mode)) | {ticker})))
+        cfg, open_now = self.cfg(), False
+        if in_session(cfg, now_msk()):
+            open_now = True
+            if not self._running(mode):
+                self._spawn(mode, True)
+        return {"ok": True, "now": open_now}
+
     def post_risk_reset(self, body: dict) -> dict:
+        from .live import write_atomic
+
         mode = body.get("mode")
         path = self.root / "state" / f"{mode}.json"
         if mode not in MODES or not path.exists():
@@ -284,20 +336,21 @@ class App:
             raise ApiError("stop trading first, then clear the pause")
         state = json.loads(path.read_text(encoding="utf-8"))
         state.setdefault("risk", {}).update(halt_until="", halt_reason="", consecutive_losses=0)
-        path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+        write_atomic(path, json.dumps(state, indent=2, ensure_ascii=False))
         return {"ok": True}
 
     def shutdown(self) -> None:
-        running = [m for m in MODES if self._running(m)]
+        running = [m for m in MODES if self.procs.get(m) and self.procs[m].poll() is None]
         for m in running:
             (self.root / "state" / f"{m}.stop").write_text("stop", encoding="utf-8")
         if running:
-            print("Waiting for trading processes to finish their cycle ...")
+            print("Waiting for trading to finish its current cycle ...")
         for m in running:
             try:
-                self.procs[m].wait(timeout=200)
+                self.procs[m].wait(timeout=45)
             except subprocess.TimeoutExpired:
-                self.procs[m].terminate()
+                # Never killed in the middle of an order: it exits by itself when the cycle ends.
+                print(f"{m} trading is finishing an order and will stop by itself.")
 
     # ---- journal and logs ------------------------------------------------------------
     def get_journal(self, q: dict) -> dict:
@@ -390,7 +443,7 @@ class App:
         if not token:
             raise ApiError("no token saved")
         try:
-            accounts = TBankClient(token, sandbox=bool(body.get("sandbox")), root=ROOT).accounts()
+            accounts = TBankClient(token, sandbox=bool(body.get("sandbox"))).accounts()
         except TBankError as e:
             raise ApiError(str(e)) from None
         return {"accounts": [{"id": a.get("id"), "name": a.get("name", ""), "type": a.get("type", ""),
@@ -470,6 +523,7 @@ def serve(config_path: str | None, port: int = 8791, open_browser: bool = True) 
     port = candidate
     Handler.hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
     url = f"http://127.0.0.1:{port}"
+    threading.Thread(target=app._beat, daemon=True).start()
     print(f"Interface: {url}\nKeep this window open while you use it. Press Ctrl+C to stop.")
     if open_browser:
         threading.Timer(0.6, webbrowser.open, [url]).start()

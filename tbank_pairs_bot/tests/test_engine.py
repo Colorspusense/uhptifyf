@@ -32,7 +32,7 @@ def test_paper_engine_opens_and_stops_out(tmp_path, monkeypatch):
 
     feed = FakeFeed(cfg)
     engine = Engine(cfg, feed, "paper", lambda state: PaperExecutor(cfg, state))
-    rows = engine.cycle()
+    rows = engine.cycle(ignore_session=True)
     assert len(engine.state["positions"]) == 1, rows
     pos = engine.state["positions"][0]
     value = pos["qty"] * pos["entry_price"]
@@ -43,11 +43,11 @@ def test_paper_engine_opens_and_stops_out(tmp_path, monkeypatch):
 
     # State survives a restart, and a second cycle does not average into the position.
     engine = Engine(cfg, feed, "paper", lambda state: PaperExecutor(cfg, state))
-    engine.cycle()
+    engine.cycle(ignore_session=True)
     assert len(engine.state["positions"]) == 1
 
     feed.override = {pos["ticker"]: pos["stop"] * 0.999}
-    engine.cycle()
+    engine.cycle(ignore_session=True)
     assert engine.state["positions"] == []
     trades = list(csv.DictReader((tmp_path / "journal" / "trades.csv").open(encoding="utf-8")))
     assert len(trades) == 1 and trades[0]["reason"] == "stop" and float(trades[0]["pnl"]) < 0
