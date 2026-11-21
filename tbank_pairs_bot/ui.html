@@ -25,7 +25,9 @@ a{color:inherit}
 .nav a{display:block;padding:8px 10px;margin:1px 0;border-radius:8px;color:var(--muted);text-decoration:none;cursor:pointer}
 .nav a:hover{color:var(--text);background:#ffffff08}
 .nav a.on{color:var(--text);background:var(--raised)}
-.side .foot{margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.7}
+.side .lang{margin:auto 10px 12px;align-self:flex-start}
+.side .lang button{padding:3px 11px;font-size:12px}
+.side .foot{padding:12px 10px 0;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.7}
 .side .foot b{color:var(--text);font-weight:500}
 
 main{padding:28px 36px 60px;max-width:1280px;width:100%;min-width:0}
@@ -41,9 +43,9 @@ h2{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;le
 .grow{flex:1}
 .grid{display:grid;gap:16px;margin-bottom:16px}
 .g4{grid-template-columns:repeat(4,1fr)} .g5{grid-template-columns:repeat(5,1fr)} .g2{grid-template-columns:1fr 1fr}
-.grid .card{margin:0}
+.grid .card{margin:0;min-width:0}
 .stat .k{color:var(--muted);font-size:12px}
-.stat .v{font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v{font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
 .stat .h{color:var(--dim);font-size:12px;margin-top:2px}
 
 .btn{font:inherit;color:var(--text);background:var(--raised);border:1px solid var(--line2);border-radius:8px;padding:7px 14px;cursor:pointer;white-space:nowrap}
@@ -57,7 +59,7 @@ h2{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;le
 .btn.link:hover{color:var(--text)}
 
 .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
-.seg button{font:inherit;color:var(--muted);background:none;border:0;border-radius:6px;padding:5px 14px;cursor:pointer}
+.seg button{font:inherit;color:var(--muted);background:none;border:0;border-radius:6px;padding:5px 14px;cursor:pointer;white-space:nowrap}
 .seg button.on{background:var(--raised);color:var(--text)}
 
 input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:7px 10px;outline:none;min-width:0}
@@ -94,9 +96,9 @@ tbody tr.sel td{background:#ffffff09}
 .empty{color:var(--muted);text-align:center;padding:34px 20px}
 .meter{display:inline-block;width:54px;height:4px;border-radius:2px;background:var(--line2);vertical-align:middle;margin-right:8px;overflow:hidden}
 .meter i{display:block;height:100%;background:var(--muted)}
-.bars div{display:grid;grid-template-columns:150px 1fr 110px;align-items:center;gap:12px;padding:5px 0}
+.bars div{display:grid;grid-template-columns:170px 1fr 120px;align-items:center;gap:12px;padding:5px 0}
 .bars .b{height:6px;border-radius:3px;background:var(--line)} .bars .b i{display:block;height:100%;border-radius:3px}
-.bars span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.bars span:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .chart{position:relative}
 .chart svg{display:block;width:100%}
@@ -109,7 +111,7 @@ tbody tr.sel td{background:#ffffff09}
 .field .l{min-width:0}
 .field .l b{font-weight:500;display:block}
 .field .l span{color:var(--muted);font-size:12px;display:block}
-.field input:not([type=checkbox]){width:100%;text-align:right}
+.field input:not([type=checkbox]),.field select{width:100%;text-align:right}
 .field .c{text-align:right}
 .savebar{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 35%);padding:26px 0 4px;display:flex;gap:12px;align-items:center}
 details summary{cursor:pointer;color:var(--muted)}
@@ -120,19 +122,20 @@ details summary{cursor:pointer;color:var(--muted)}
 .toast{background:var(--raised);border:1px solid var(--line2);border-left:3px solid var(--good);border-radius:8px;padding:10px 14px;max-width:420px;box-shadow:0 8px 30px #0008}
 .toast.bad{border-left-color:var(--bad)}
 .modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20}
-.modal .card{width:440px;max-width:92vw;margin:0}
+.modal .card{width:460px;max-width:92vw;margin:0}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--text);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:8px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .cover{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;z-index:40;padding:30px}
 .cover code{background:var(--raised);padding:2px 8px;border-radius:6px}
-@media(max-width:1000px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;align-items:center;gap:8px;padding:10px;overflow:auto}.brand{padding:0 8px}.nav{display:flex}.side .foot{display:none}main{padding:20px 16px 50px}.g4,.g5{grid-template-columns:1fr 1fr}.g2,.fields{grid-template-columns:1fr}}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;align-items:center;gap:8px;padding:10px;overflow:auto}.brand{padding:0 8px;white-space:nowrap}.nav{display:flex}.side .lang{margin:0 0 0 auto}.side .foot{display:none}main{padding:20px 16px 50px}.g4,.g5{grid-template-columns:1fr 1fr}.g2,.fields{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="side">
-    <div class="brand"><i></i>Pairs bot</div>
+    <div class="brand"><i></i><span id="brand"></span></div>
     <nav class="nav" id="nav"></nav>
+    <div class="seg lang" id="lang"></div>
     <div class="foot" id="foot"></div>
   </aside>
   <main id="view"></main>
@@ -143,10 +146,261 @@ details summary{cursor:pointer;color:var(--muted)}
 <script>
 "use strict";
 const TOKEN = "__API_TOKEN__";
+
+/* ---------- localization: English strings are the keys ---------- */
+const RU = {
+  "Pairs bot": "Парный бот",
+  "Dashboard": "Обзор", "Scanner": "Сканер", "Backtest": "Бэктест", "Journal": "Журнал", "Settings": "Настройки", "Logs": "Логи",
+  "Paper": "Симуляция", "Sandbox": "Песочница", "Live": "Реальный счёт",
+  "Simulated orders on live quotes with a virtual account.": "Заявки имитируются на живых котировках, счёт виртуальный.",
+  "Orders go to the T-Bank sandbox. No real money.": "Заявки уходят в песочницу Т-Банка. Реальные деньги не участвуют.",
+  "Real orders on your T-Bank account.": "Реальные заявки на вашем счёте в Т-Банке.",
+  "Start paper trading": "Запустить симуляцию", "Start sandbox trading": "Запустить в песочнице", "Start live trading": "Запустить реальную торговлю",
+  "Loading…": "Загрузка…",
+  "The bot's interface server is not running.": "Сервер интерфейса не запущен.",
+  "Server not running": "Сервер не запущен", "Start it again with ui.bat": "Запустите его снова через ui.bat",
+  "Moscow": "МСК", "session": "сессия", "open": "открыта", "closed": "закрыта",
+  "Data": "Данные", "MOEX (delayed)": "МосБиржа (с задержкой)", "synthetic": "синтетические", "Trading": "Торговля", "stopped": "остановлена",
+  "Stopping after the current cycle…": "Остановка после текущего цикла…",
+  "Running": "Работает", "Stopped": "Остановлено",
+  "checks every {0} min": "проверка каждые {0} мин",
+  "waiting for the session ({0}–{1} Moscow)": "ожидание сессии ({0}–{1} МСК)",
+  "Stop": "Остановить", "Run one cycle": "Выполнить один цикл",
+  "The process stopped with an error": "Процесс остановился с ошибкой",
+  "New entries paused until {0}": "Новые входы на паузе до {0}",
+  "Review the trades before resuming.": "Разберите сделки, прежде чем продолжать.",
+  "Clear pause": "Снять паузу",
+  "Add a T-Bank token in Settings": "Добавьте токен Т-Банка в настройках",
+  "to use this mode.": "чтобы использовать этот режим.",
+  "Last cycle {0}.": "Последний цикл: {0}.",
+  "Equity": "Капитал", "Position value": "Стоимость позиций", "virtual account": "виртуальный счёт",
+  "full balance is in the T-Bank app": "полный баланс смотрите в приложении Т-Банка",
+  "Cash": "Свободные деньги", "Equity at day start": "Капитал на начало дня",
+  "open position": "открытая позиция", "open positions": "открытые позиции",
+  "Unrealised P&L": "Нереализованный результат", "at the latest quotes": "по последним котировкам",
+  "Losses in a row": "Убытков подряд", "risk per trade {0}%": "риск на сделку {0}%",
+  "Open positions": "Открытые позиции", "No open positions in this mode.": "В этом режиме нет открытых позиций.",
+  "Stock": "Акция", "Qty": "Кол-во", "Entry": "Вход", "Last": "Текущая", "P&L": "Результат", "Z at entry": "Z на входе", "Opened": "Открыта",
+  "vs": "против",
+  "Recent activity": "Последние события", "Full log": "Весь лог",
+  "Nothing logged yet. Start trading or run one cycle.": "Записей пока нет. Запустите торговлю или выполните один цикл.",
+  "Running one cycle…": "Выполняется один цикл…", "Started: {0}": "Запущено: {0}",
+  "Stopping after the current cycle": "Остановка после текущего цикла", "Pause cleared": "Пауза снята",
+  "Real money": "Реальные деньги",
+  "Live mode sends real orders to your T-Bank account, with risk of {0}% of capital per trade. Make sure paper and sandbox results satisfy you first.": "В этом режиме бот отправляет реальные заявки на ваш счёт в Т-Банке с риском {0}% капитала на сделку. Сначала убедитесь, что вас устраивают результаты симуляции и песочницы.",
+  "Type LIVE to confirm": "Для подтверждения введите LIVE", "Cancel": "Отмена", "Run one live cycle": "Выполнить один реальный цикл",
+  "Auto": "Авто", "T-Bank": "Т-Банк", "MOEX": "МосБиржа", "Synthetic demo": "Синтетика (демо)",
+  "{0} data": "данные: {0}",
+  "Scanning…": "Сканирование…", "Run scan": "Сканировать",
+  "Downloading quotes and computing statistics…": "Загрузка котировок и расчёт статистики…",
+  "Run a scan to see today's statistics and signals for every pair. No orders are placed.": "Запустите сканирование, чтобы увидеть сегодняшнюю статистику и сигналы по каждой паре. Заявки не выставляются.",
+  "Market strong · index above EMA200, EMA50 above EMA200": "Рынок сильный · индекс выше EMA200, EMA50 выше EMA200",
+  "Market neutral · index above EMA200": "Рынок нейтральный · индекс выше EMA200",
+  "Market weak · index below EMA200, no buying": "Рынок слабый · индекс ниже EMA200, покупки запрещены",
+  "Entry needs correlation > {0}, cointegration p < {1}, β change < {2}%, Z ≤ {3}, TQS ≥ {4}": "Для входа нужны: корреляция > {0}, коинтеграция p < {1}, изменение β < {2}%, Z ≤ {3}, TQS ≥ {4}",
+  "Buy": "Покупаем", "Corr 120d": "Корр. 120д", "Corr 60d": "Корр. 60д", "Coint. p": "Коинт. p", "β change": "Изм. β", "Half-life": "Полураспад", "Z-score": "Z-score", "Verdict": "Вывод",
+  "Screen 1 passed": "Экран 1 пройден",
+  "Loading {0} history…": "Загрузка истории {0}…",
+  "entry {0}": "вход {0}", "exit {0}": "выход {0}",
+  "Price, start of period = 100": "Цена, начало периода = 100",
+  "Select a row to see the Z-score history of that pair.": "Выберите строку, чтобы увидеть историю Z-score этой пары.",
+  "Not enough data to draw": "Недостаточно данных для графика",
+  "last run {0}": "последний запуск {0}",
+  "From": "С", "To": "По",
+  "Empty dates = the last 5 years. Signals at the close, fills at the next open.": "Пустые даты = последние 5 лет. Сигнал по закрытию дня, исполнение на открытии следующего.",
+  "Running…": "Выполняется…", "Walk-forward": "Walk-forward", "Run backtest": "Запустить бэктест",
+  "Walk-forward tunes parameters on several windows and can take a few minutes.": "Walk-forward подбирает параметры на нескольких окнах и может занять несколько минут.",
+  "Downloading history and simulating. The first run takes the longest.": "Загрузка истории и симуляция. Первый запуск самый долгий.",
+  "Synthetic data: this shows how the mechanics work, not how the strategy performs on the market.": "Синтетические данные: это демонстрация механики, а не результат стратегии на рынке.",
+  "Net profit": "Чистая прибыль", "{0}% on {1}": "{0}% на {1}",
+  "Max drawdown": "Макс. просадка", "Trades": "Сделки", "avg hold {0} days": "в среднем {0} дн. в позиции",
+  "no signal passed the filters": "ни один сигнал не прошёл фильтры",
+  "Win rate": "Доля прибыльных", "longest losing streak {0}": "макс. серия убытков: {0}",
+  "Avg win / loss": "Средняя прибыль / убыток", "recovery factor {0}": "фактор восстановления {0}",
+  "P&L by pair": "Результат по парам", "Exit reasons": "Причины выхода",
+  "Bought": "Куплено", "Exit": "Выход", "Days": "Дней", "Entry price": "Цена входа", "Exit price": "Цена выхода", "Exit reason": "Причина выхода",
+  "Run a backtest to simulate the strategy on daily history with your current settings.": "Запустите бэктест, чтобы проверить стратегию на дневной истории с текущими настройками.",
+  "out-of-sample total": "итог вне выборки",
+  "Tuned on": "Настройка", "Tested on": "Проверка", "Entry Z": "Z входа", "Exit Z": "Z выхода", "Max DD": "Макс. просадка",
+  "Not enough history for one tuning window plus one test window.": "Недостаточно истории для одного окна настройки и одного окна проверки.",
+  "stop": "стоп", "mean reversion": "возврат к среднему", "target": "цель", "pair breakdown": "распад пары", "time stop": "стоп по времени",
+  "All": "Все", "Closed trades": "Закрытые сделки", "Result": "Результат", "Stopped out": "Закрыто по стопу",
+  "Mode": "Режим", "Z in": "Z вход", "Z out": "Z выход",
+  "No closed trades yet. Every trade the bot closes is recorded here.": "Закрытых сделок пока нет. Каждая закрытая ботом сделка записывается сюда.",
+  "Pair passports": "Паспорта пар", "Choose a pair…": "Выберите пару…",
+  "Daily statistics of each pair, recorded while the bot trades.": "Ежедневная статистика каждой пары, которая записывается во время работы бота.",
+  "Passports appear after the bot has run at least one trading cycle.": "Паспорта появятся после первого торгового цикла.",
+  "Date": "Дата", "β": "β", "TQS": "TQS",
+  "General": "Общие", "Capital and market data": "Капитал и источник данных",
+  "Screen 1 · statistics": "Экран 1 · статистика", "Correlation, cointegration, β and Z-score thresholds": "Пороги корреляции, коинтеграции, β и Z-score",
+  "Screen 3 · entry": "Экран 3 · вход", "15-minute chart filter used in paper, sandbox and live modes": "Фильтр по 15-минутному графику для симуляции, песочницы и реальной торговли",
+  "Trade quality score": "Рейтинг качества сигнала (TQS)", "Which scores are allowed to trade": "С какими баллами разрешена сделка",
+  "Risk and money management": "Риск и управление капиталом", "Fractions of capital: 0.005 means 0.5%": "Доли капитала: 0.005 означает 0,5%",
+  "Costs": "Издержки", "Used by the simulations": "Учитываются в симуляциях",
+  "Trading session": "Торговая сессия", "Times are Moscow time": "Время московское",
+  "Parameter values tried on each tuning window": "Значения параметров, которые перебираются на каждом окне настройки",
+  "comma separated": "через запятую",
+  "T-Bank connection": "Подключение к Т-Банку", "Token saved": "Токен сохранён", "No token": "Токена нет",
+  "Stored in the .env file in the bot folder. It is never shown again here.": "Хранится в файле .env в папке бота. Здесь он больше не показывается.",
+  "Without a token the bot reads delayed public MOEX quotes and can only simulate. Create one in T-Investments → Settings → T-Invest API tokens.": "Без токена бот использует публичные котировки МосБиржи с задержкой и может только симулировать. Создайте токен в Т-Инвестициях: Настройки → Токены T-Invest API.",
+  "Replace token": "Заменить токен", "Token": "Токен", "Account ID": "ID счёта", "only with several accounts": "только если счетов несколько",
+  "Save": "Сохранить", "Test": "Проверить", "Test sandbox": "Проверить песочницу", "Remove": "Удалить",
+  "Account": "Счёт", "Type": "Тип", "Access": "Доступ", "Use this account": "Использовать этот счёт",
+  "Connected. No accounts yet: a sandbox account is opened automatically on the first sandbox run.": "Подключение работает. Счетов пока нет: счёт в песочнице откроется автоматически при первом запуске.",
+  "config.toml has an error": "В config.toml ошибка", "Fix it in the file editor below.": "Исправьте её в редакторе файла ниже.",
+  "Pairs": "Пары", "Stocks of the same sector. The bot buys whichever of the two is lagging.": "Акции одного сектора. Бот покупает ту из двух, которая отстаёт.",
+  "Stock A": "Акция A", "Stock B": "Акция B", "Sector": "Сектор", "Add pair": "Добавить пару",
+  "Edit config.toml as text": "Редактировать config.toml как текст", "Save file": "Сохранить файл",
+  "The file is checked before saving; the previous version is kept as config.toml.bak.": "Файл проверяется перед сохранением; прежняя версия остаётся в config.toml.bak.",
+  "Save settings": "Сохранить настройки", "Discard changes": "Отменить изменения",
+  "A running trading process picks up new settings after it is restarted.": "Запущенная торговля применит новые настройки после перезапуска.",
+  "Settings saved": "Настройки сохранены", "File saved": "Файл сохранён",
+  "Restart trading to apply: {0}.": "Перезапустите торговлю, чтобы применить: {0}.",
+  "{0} must be a number": "«{0}» должно быть числом",
+  "Enter a token or an account ID": "Введите токен или ID счёта",
+  "Saved": "Сохранено", "Token removed": "Токен удалён", "Connection works": "Подключение работает", "Account selected": "Счёт выбран",
+  "refreshes automatically": "обновляется автоматически",
+  "Nothing logged yet. The log fills when paper, sandbox or live trading runs.": "Записей пока нет. Лог заполняется во время симуляции, песочницы или реальной торговли.",
+  "Start the interface with": "Запустите интерфейс через",
+  "This page talks to the bot running on your computer, so it has to be opened by the bot.": "Эта страница общается с ботом на вашем компьютере, поэтому открывать её должен сам бот.",
+  "Double-click {0} in the bot folder, or run {1}.": "Дважды щёлкните {0} в папке бота или выполните {1}.",
+};
+/* Settings: "section.key" -> [label, hint] */
+const FIELD_RU = {
+  "general.capital": ["Капитал", "стартовый капитал для бэктеста и симуляции, ₽"],
+  "general.data_source": ["Источник данных", "auto = Т-Банк, если задан токен, иначе МосБиржа"],
+  "general.skip_weekends": ["Без выходных", "не учитывать в статистике малоликвидные сессии выходного дня"],
+  "general.index_ticker": ["Тикер индекса", "индекс для оценки рынка"],
+  "stats.min_history": ["Минимум истории", "сколько торговых дней нужно"],
+  "stats.corr_window": ["Окно корреляции", "дней"],
+  "stats.rolling_corr_window": ["Окно скользящей корреляции", "дней"],
+  "stats.rolling_corr_lookback": ["Сравнение корреляции", "сравнить 60-дневную корреляцию со значением N дней назад"],
+  "stats.breakdown_corr": ["Порог распада связи", "60-дневная корреляция ниже этого = связь распалась"],
+  "stats.coint_window": ["Окно коинтеграции", "дней"],
+  "stats.coint_recalc_days": ["Пересчёт коинтеграции", "раз в N дней; в руководстве раз в неделю"],
+  "stats.beta_window": ["Окно β", "дней"],
+  "stats.beta_stability_lookback": ["Период стабильности β", "дней, около 3 месяцев"],
+  "stats.z_window": ["Окно Z-score", "дней"],
+  "stats.min_corr": ["Мин. корреляция", "корреляция должна быть выше"],
+  "stats.max_coint_pvalue": ["Макс. p-value", "коинтеграция подтверждена, если p ниже"],
+  "stats.max_beta_change": ["Макс. изменение β", "доля; 0.10 = 10%"],
+  "stats.entry_z": ["Z для входа", "сигнал при Z не выше этого значения"],
+  "stats.extreme_z": ["Экстремальный Z", "ниже этого нужна проверка новостей"],
+  "stats.allow_extreme_z": ["Разрешить экстремальный Z", "по умолчанию такие сигналы пропускаются"],
+  "stats.require_z_turn": ["Ждать разворота Z", "не покупать, пока Z ещё падает"],
+  "stats.exit_z": ["Z для выхода", "«Z приблизился к нулю»"],
+  "stats.breakdown_beta_change": ["Распад по β", "выйти, если β изменилась сильнее"],
+  "entry.enabled": ["Включён", "третий экран, 15-минутный график"],
+  "entry.min_bars": ["Минимум свечей", "сколько 15-минутных свечей нужно"],
+  "entry.pullback_lookback": ["Глубина поиска отката", "свечей"],
+  "entry.ema_touch_tolerance": ["Допуск касания EMA20", "доля цены"],
+  "entry.long_candle_atr": ["Длинная свеча", "тело больше N средних диапазонов = вход запрещён"],
+  "entry.require_pullback": ["Требовать откат", "входить только после завершённого отката"],
+  "entry.max_book_spread": ["Макс. спред в стакане", "спред шире 0,1% = стакан не чистый"],
+  "tqs.min_score": ["Рабочий порог", "с этого балла полный объём"],
+  "tqs.reduced_min_score": ["Порог уменьшенного объёма", "70–79 разрешено только с уменьшенной позицией"],
+  "tqs.reduced_size_factor": ["Коэффициент уменьшения", "доля обычного объёма"],
+  "risk.risk_per_trade": ["Риск на сделку", "0,5% новичок, 1% опытный, не выше 1,5%"],
+  "risk.stop_pct": ["Стоп-лосс", "расстояние защитного стопа от цены входа"],
+  "risk.take_profit_pct": ["Цель по прибыли", "необязательная фиксированная цель; 0 = выход только по Z"],
+  "risk.max_position_pct": ["Макс. размер позиции", "предел одной позиции в доле капитала"],
+  "risk.max_sector_risk": ["Риск на сектор", "совокупный риск по сектору"],
+  "risk.daily_loss_limit": ["Дневной лимит убытка", "после него новые входы запрещены"],
+  "risk.weekly_drawdown_limit": ["Недельный лимит просадки", "после него пауза и разбор"],
+  "risk.max_consecutive_losses": ["Убытков подряд до паузы", ""],
+  "risk.pause_days": ["Длительность паузы", "дней после серии убытков или до ручного снятия"],
+  "risk.max_holding_days": ["Макс. срок удержания", "дней; 0 = без ограничения"],
+  "costs.commission": ["Комиссия", "за одну сторону сделки"],
+  "costs.slippage": ["Проскальзывание", "только в симуляциях"],
+  "live.poll_seconds": ["Интервал проверки", "секунд между циклами"],
+  "live.session_start": ["Начало сессии", "московское время, только основная сессия"],
+  "live.session_end": ["Конец сессии", ""],
+  "live.order_timeout_seconds": ["Ожидание исполнения", "через столько секунд лимитная заявка снимается"],
+  "live.place_broker_stop": ["Стоп у брокера", "дополнительно выставлять стоп-лосс у брокера"],
+  "live.news_blackout": ["Запрет из-за новостей", "тикеры, которые сегодня пропускаем, например GAZP"],
+  "walkforward.train_days": ["Окно настройки", "дней"],
+  "walkforward.test_days": ["Окно проверки", "дней"],
+  "walkforward.entry_z": ["Варианты Z входа", ""],
+  "walkforward.exit_z": ["Варианты Z выхода", ""],
+  "walkforward.stop_pct": ["Варианты стопа", ""],
+};
+/* Messages produced by the bot itself (verdicts, pause reasons, errors) */
+const MSG_RU = [
+  [/^config\.toml is invalid: /, "Ошибка в config.toml: "], [/^not saved: /, "Не сохранено: "],
+  [/risk\.risk_per_trade must be in \(0, 0\.02\]; the guide forbids more than 2%/, "риск на сделку должен быть в пределах (0, 0.02]: руководство запрещает риск выше 2%"],
+  [/risk\.stop_pct must be a fraction such as 0\.02/, "стоп-лосс задаётся долей, например 0.02"],
+  [/config has no \[\[pairs\]\]/, "в настройках нет ни одной пары"],
+  [/unknown option\(s\) in \[(\w+)\]: /, "неизвестные параметры в разделе [$1]: "],
+  [/^([\w.]+): expected (\w+)$/, "$1: ожидается значение типа $2"],
+  [/^bad date: /, "Неверная дата: "],
+  [/^a \w+ job is already running$/, "Такая задача уже выполняется"],
+  [/^synthetic data is only for backtests$/, "Синтетические данные подходят только для бэктеста"],
+  [/^synthetic data is daily only.*$/, "Синтетические данные подходят только для бэктеста"],
+  [/^not enough history for this pair$/, "Недостаточно истории по этой паре"],
+  [/^\w+ is already running$/, "Этот режим уже запущен"],
+  [/^live trading needs the typed confirmation$/, "Для реальной торговли введите слово LIVE"],
+  [/^add a T-Bank token in Settings first$/, "Сначала добавьте токен Т-Банка в настройках"],
+  [/^not running$/, "Не запущено"],
+  [/^no saved state for this mode$/, "Для этого режима ещё нет сохранённого состояния"],
+  [/^stop trading first, then clear the pause$/, "Сначала остановите торговлю, затем снимите паузу"],
+  [/^every pair needs two different tickers$/, "В каждой паре должны быть два разных тикера"],
+  [/^the value contains spaces or quotes$/, "Значение содержит пробелы или кавычки"],
+  [/^no token saved$/, "Токен не сохранён"],
+  [/^data source 'tbank' needs TBANK_TOKEN.*$/, "Для данных Т-Банка нужен токен: добавьте его в настройках"],
+  [/^session expired, reload the page$/, "Сессия устарела, обновите страницу"],
+  [/Authentication token is missing or invalid/, "токен отсутствует или недействителен"],
+  [/^(\w+) failed, HTTP (\d+): /, "Запрос $1 отклонён, HTTP $2: "],
+  [/rolling corr broke down \(/g, "скользящая корреляция распалась ("],
+  [/\bcorr (-?[\d.]+) <= ([\d.]+)/g, "корреляция $1 ≤ $2"],
+  [/not cointegrated \(/g, "нет коинтеграции ("],
+  [/beta unstable \(/g, "β нестабильна ("],
+  [/beta (-?[\d.]+) <= 0/g, "β $1 ≤ 0"],
+  [/Z (-?[\d.]+) is extreme, check the news/g, "Z $1: экстремум, проверьте новости"],
+  [/Z still falling \((-?[\d.]+) -> (-?[\d.]+)\)/g, "Z ещё падает ($1 → $2)"],
+  [/index below EMA200/g, "индекс ниже EMA200"],
+  [/news blackout/g, "запрет из-за новостей"],
+  [/already in position/g, "уже в позиции"],
+  [/closed today, no re-entry/g, "закрыта сегодня, повторный вход запрещён"],
+  [/not enough history/g, "недостаточно истории"],
+  [/only (\d+) intraday bars/g, "внутридневных свечей всего $1"],
+  [/15m trend not aligned \(price > EMA20 > EMA50 > EMA200\)/g, "нет тренда на 15 минутах (цена > EMA20 > EMA50 > EMA200)"],
+  [/last candle is a long rising candle/g, "последняя свеча длинная растущая"],
+  [/no completed pullback/g, "откат не завершён"],
+  [/order book spread too wide/g, "слишком широкий спред в стакане"],
+  [/TQS (\d+) below (\d+)/g, "TQS $1 ниже $2"],
+  [/BUY SIGNAL/g, "СИГНАЛ НА ПОКУПКУ"], [/\(reduced size\)/g, "(уменьшенный объём)"],
+  [/signal skipped: /g, "сигнал пропущен: "],
+  [/trading paused until ([\d-]+): /g, "торговля на паузе до $1: "],
+  [/(\d+) losses in a row/g, "убытков подряд: $1"],
+  [/weekly drawdown limit hit/g, "достигнут недельный лимит просадки"],
+  [/daily loss limit hit/g, "достигнут дневной лимит убытка"],
+  [/sector risk limit/g, "лимит риска на сектор"],
+  [/not enough cash for one lot/g, "не хватает денег на один лот"],
+  [/limit order not filled/g, "лимитная заявка не исполнена"],
+  [/BOUGHT (\d+) at ([\d.]+), stop ([\d.]+)/g, "КУПЛЕНО $1 по $2, стоп $3"],
+];
+let LANG = localStorage.getItem("lang") || ((navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en");
+const MISSING = new Set();
+function t(s, ...a) {
+  let r = s;
+  if (LANG === "ru") { if (RU[s] === undefined) MISSING.add(s); else r = RU[s]; }
+  return a.length ? r.replace(/\{(\d)\}/g, (_, i) => a[i]) : r;
+}
+function tr(s) {
+  if (LANG !== "ru" || !s) return s;
+  for (const [re, to] of MSG_RU) s = s.replace(re, to);
+  return s;
+}
+function plural(n, one, many, ru) {
+  if (LANG !== "ru") return n === 1 ? one : many;
+  const d = n % 10, h = n % 100;
+  return d === 1 && h !== 11 ? ru[0] : d >= 2 && d <= 4 && (h < 12 || h > 14) ? ru[1] : ru[2];
+}
+
 const PAGES = [["dashboard","Dashboard"],["scanner","Scanner"],["backtest","Backtest"],["journal","Journal"],["settings","Settings"],["logs","Logs"]];
-const MODES = {paper:["Paper","Simulated orders on live quotes with a virtual account."],
-               sandbox:["Sandbox","Orders go to the T-Bank sandbox. No real money."],
-               live:["Live","Real orders on your T-Bank account."]};
+const MODES = {paper:["Paper","Simulated orders on live quotes with a virtual account.","Start paper trading"],
+               sandbox:["Sandbox","Orders go to the T-Bank sandbox. No real money.","Start sandbox trading"],
+               live:["Live","Real orders on your T-Bank account.","Start live trading"]};
 const S = {page:"dashboard", mode:localStorage.getItem("mode")||"paper", ov:null, down:false, log:[],
            scan:null, scanBusy:false, scanSource:"", pair:null, pairBusy:"",
            bt:null, btBusy:false, wf:null, wfBusy:false, btForm:{source:"",start:"",end:""},
@@ -155,18 +409,20 @@ const S = {page:"dashboard", mode:localStorage.getItem("mode")||"paper", ov:null
 const $ = (s, r=document) => r.querySelector(s);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const num = (v, d=2) => v == null || v === "" || isNaN(v) ? "—" : Number(v).toLocaleString("en-US", {minimumFractionDigits:d, maximumFractionDigits:d});
+const num = (v, d=2) => v == null || v === "" || isNaN(v) ? "—" : Number(v).toLocaleString(LANG === "ru" ? "ru-RU" : "en-US", {minimumFractionDigits:d, maximumFractionDigits:d});
 const rub = (v, d=0) => v == null || isNaN(v) ? "—" : num(v, d) + " ₽";
 const signed = (v, d=0) => v == null || isNaN(v) ? "—" : (v > 0 ? "+" : "") + num(v, d) + " ₽";
 const tone = v => v > 0 ? "good" : v < 0 ? "bad" : "";
 const label = k => { const s = k.replace(/_/g, " "); return s[0].toUpperCase() + s.slice(1); };
+const srcName = s => ({tbank: t("T-Bank"), moex: t("MOEX"), synthetic: t("synthetic")}[s] || s);
+const when = s => esc(String(s).replace("T", " "));
 
 async function api(path, body) {
   let r;
   try {
     r = await fetch(path, {method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined,
                            headers: {"X-Token": TOKEN, ...(body ? {"Content-Type": "application/json"} : {})}});
-  } catch (e) { S.down = true; drawFoot(); throw new Error("The bot's interface server is not running."); }
+  } catch (e) { S.down = true; drawFoot(); throw new Error(t("The bot's interface server is not running.")); }
   S.down = false;
   const j = await r.json().catch(() => ({error: "Unexpected response"}));
   if (!r.ok) throw new Error(j.error || r.statusText);
@@ -188,14 +444,14 @@ function toast(text, bad) {
   $("#toasts").append(el);
   setTimeout(() => el.remove(), bad ? 9000 : 4000);
 }
-const fail = e => toast(e.message || String(e), true);
+const fail = e => toast(tr(e.message || String(e)), true);
 
 /* ---------- chart ---------- */
 function chart(el, {labels, series, hlines = [], height = 230, fmt = v => num(v, 2)}) {
   if (!el) return;
-  const W = Math.max(el.clientWidth, 300), H = height, p = {l: 62, r: 10, t: 8, b: 22};
+  const W = Math.max(el.clientWidth, 300), H = height, p = {l: 66, r: 10, t: 8, b: 22};
   const vals = series.flatMap(s => s.data).filter(v => v != null).concat(hlines.map(h => h.y));
-  if (!vals.length || labels.length < 2) { el.innerHTML = '<div class="empty">Not enough data to draw</div>'; return; }
+  if (!vals.length || labels.length < 2) { el.innerHTML = `<div class="empty">${t("Not enough data to draw")}</div>`; return; }
   let lo = Math.min(...vals), hi = Math.max(...vals);
   if (lo === hi) { lo -= 1; hi += 1; }
   const pad = (hi - lo) * .07; lo -= pad; hi += pad;
@@ -231,30 +487,34 @@ function chart(el, {labels, series, hlines = [], height = 230, fmt = v => num(v,
 
 /* ---------- shell ---------- */
 function drawNav() {
-  $("#nav").innerHTML = PAGES.map(([id, name]) => `<a href="#/${id}" class="${S.page === id ? "on" : ""}">${name}</a>`).join("");
+  document.documentElement.lang = LANG;
+  document.title = t("Pairs bot");
+  $("#brand").textContent = t("Pairs bot");
+  $("#nav").innerHTML = PAGES.map(([id, name]) => `<a href="#/${id}" class="${S.page === id ? "on" : ""}">${t(name)}</a>`).join("");
+  $("#lang").innerHTML = [["en", "EN"], ["ru", "RU"]].map(([v, n]) => `<button data-act="lang" data-v="${v}" class="${LANG === v ? "on" : ""}">${n}</button>`).join("");
 }
 function drawFoot() {
   const o = S.ov;
-  if (S.down) { $("#foot").innerHTML = '<span class="bad">Server not running</span><br>Start it again with ui.bat'; return; }
+  if (S.down) { $("#foot").innerHTML = `<span class="bad">${t("Server not running")}</span><br>${t("Start it again with ui.bat")}`; return; }
   if (!o) { $("#foot").textContent = ""; return; }
-  const running = Object.keys(MODES).filter(m => o.modes[m].running).map(m => MODES[m][0]);
-  $("#foot").innerHTML = `<b>${esc(o.time.slice(11, 16))}</b> Moscow · session ${o.in_session ? '<span class="good">open</span>' : "closed"}<br>` +
-    `Data: <b>${esc({tbank: "T-Bank", moex: "MOEX (delayed)", synthetic: "synthetic"}[o.source] || o.source)}</b><br>` +
-    `Trading: ${running.length ? '<b class="good">' + running.join(", ") + "</b>" : "stopped"}`;
+  const running = Object.keys(MODES).filter(m => o.modes[m].running).map(m => t(MODES[m][0]));
+  $("#foot").innerHTML = `<b>${esc(o.time.slice(11, 16))}</b> ${t("Moscow")} · ${t("session")} ${o.in_session ? `<span class="good">${t("open")}</span>` : t("closed")}<br>` +
+    `${t("Data")}: <b>${esc(o.source === "moex" ? t("MOEX (delayed)") : srcName(o.source))}</b><br>` +
+    `${t("Trading")}: ${running.length ? '<b class="good">' + running.join(", ") + "</b>" : t("stopped")}`;
 }
 function render() {
   drawNav();
-  const v = $("#view");
-  v.innerHTML = VIEWS[S.page]();
+  $("#view").innerHTML = VIEWS[S.page]();
   (AFTER[S.page] || (() => {}))();
 }
 const VIEWS = {}, AFTER = {}, ENTER = {}, ACT = {};
+ACT.lang = el => { LANG = el.dataset.v; localStorage.setItem("lang", LANG); render(); drawFoot(); };
 
 /* ---------- dashboard ---------- */
 VIEWS.dashboard = () => {
   const o = S.ov;
-  const seg = `<div class="seg">${Object.entries(MODES).map(([m, [n]]) => `<button data-act="mode" data-v="${m}" class="${S.mode === m ? "on" : ""}">${n}</button>`).join("")}</div>`;
-  if (!o) return `<div class="head"><h1>Dashboard</h1></div><div class="card empty"><span class="spin"></span>Loading…</div>`;
+  const seg = `<div class="seg">${Object.keys(MODES).map(m => `<button data-act="mode" data-v="${m}" class="${S.mode === m ? "on" : ""}">${t(MODES[m][0])}</button>`).join("")}</div>`;
+  if (!o) return `<div class="head"><h1>${t("Dashboard")}</h1></div><div class="card empty"><span class="spin"></span>${t("Loading…")}</div>`;
   const m = o.modes[S.mode], rk = m.risk || {}, pos = m.positions, cfg = o.config;
   const last = p => o.quotes[p.ticker] ?? p.entry_price;
   const value = pos.reduce((s, p) => s + p.qty * last(p), 0);
@@ -262,49 +522,49 @@ VIEWS.dashboard = () => {
   const paper = S.mode === "paper", cash = m.cash ?? cfg.general.capital;
   const needToken = !paper && !o.token_set;
   let status;
-  if (m.stopping) status = `<span class="dot wait"></span>Stopping after the current cycle…`;
-  else if (m.running) status = `<span class="dot on"></span>Running <span class="muted">· ${o.in_session ? "checks every " + Math.round(cfg.live.poll_seconds / 60 * 10) / 10 + " min" : "waiting for the session (" + esc(cfg.live.session_start) + "–" + esc(cfg.live.session_end) + " Moscow)"}</span>`;
-  else status = `<span class="dot"></span>Stopped`;
+  if (m.stopping) status = `<span class="dot wait"></span>${t("Stopping after the current cycle…")}`;
+  else if (m.running) status = `<span class="dot on"></span>${t("Running")} <span class="muted">· ${o.in_session ? t("checks every {0} min", num(cfg.live.poll_seconds / 60, 0)) : t("waiting for the session ({0}–{1} Moscow)", esc(cfg.live.session_start), esc(cfg.live.session_end))}</span>`;
+  else status = `<span class="dot"></span>${t("Stopped")}`;
   const buttons = m.running
-    ? `<button class="btn danger" data-act="stop" ${m.stopping ? "disabled" : ""}>Stop</button>`
-    : `<button class="btn" data-act="start" data-once="1" ${needToken ? "disabled" : ""}>Run one cycle</button><button class="btn primary" data-act="start" ${needToken ? "disabled" : ""}>Start ${MODES[S.mode][0].toLowerCase()} trading</button>`;
+    ? `<button class="btn danger" data-act="stop" ${m.stopping ? "disabled" : ""}>${t("Stop")}</button>`
+    : `<button class="btn" data-act="start" data-once="1" ${needToken ? "disabled" : ""}>${t("Run one cycle")}</button><button class="btn primary" data-act="start" ${needToken ? "disabled" : ""}>${t(MODES[S.mode][2])}</button>`;
   const rows = pos.map(p => { const l = o.quotes[p.ticker], pnl = l == null ? null : p.qty * (l - p.entry_price); return `<tr>
-      <td><b>${esc(p.ticker)}</b> <span class="muted">vs ${esc(p.other)}</span></td><td class="n">${num(p.qty, 0)}</td><td class="n">${num(p.entry_price, 2)}</td>
+      <td><b>${esc(p.ticker)}</b> <span class="muted">${t("vs")} ${esc(p.other)}</span></td><td class="n">${num(p.qty, 0)}</td><td class="n">${num(p.entry_price, 2)}</td>
       <td class="n">${num(l, 2)}</td><td class="n">${num(p.stop, 2)}</td><td class="n ${tone(pnl)}">${signed(pnl)}</td>
       <td class="n">${num(p.z_entry, 2)}</td><td class="n">${esc(p.tqs)}</td><td>${esc(p.entry_date)}</td></tr>`; }).join("");
-  return `<div class="head"><h1>Dashboard</h1>${seg}</div>
-  ${m.error ? `<div class="banner bad"><div class="grow"><b>The ${S.mode} process stopped with an error</b><pre>${esc(m.error)}</pre></div></div>` : ""}
-  ${rk.halt_until ? `<div class="banner"><div class="grow"><b>New entries paused until ${esc(rk.halt_until)}</b> <span class="muted">· ${esc(rk.halt_reason)}. Review the trades before resuming.</span></div><button class="btn small" data-act="resetHalt">Clear pause</button></div>` : ""}
+  return `<div class="head"><h1>${t("Dashboard")}</h1>${seg}</div>
+  ${m.error ? `<div class="banner bad"><div class="grow"><b>${t("The process stopped with an error")}</b><pre>${esc(tr(m.error))}</pre></div></div>` : ""}
+  ${rk.halt_until ? `<div class="banner"><div class="grow"><b>${t("New entries paused until {0}", esc(rk.halt_until))}</b> <span class="muted">· ${esc(tr(rk.halt_reason))}. ${t("Review the trades before resuming.")}</span></div><button class="btn small" data-act="resetHalt">${t("Clear pause")}</button></div>` : ""}
   <div class="card row"><div class="grow"><div>${status}</div>
-      <div class="sub">${MODES[S.mode][1]}${needToken ? ' <a href="#/settings" class="warn">Add a T-Bank token in Settings</a> to use it.' : ""}${m.last_cycle ? " Last cycle " + esc(m.last_cycle.replace("T", " ")) + "." : ""}</div></div>${buttons}</div>
+      <div class="sub">${t(MODES[S.mode][1])}${needToken ? ` <a href="#/settings" class="warn">${t("Add a T-Bank token in Settings")}</a>, ${t("to use this mode.")}` : ""}${m.last_cycle ? " " + t("Last cycle {0}.", when(m.last_cycle)) : ""}</div></div>${buttons}</div>
   <div class="grid g4">
-    <div class="card stat"><div class="k">${paper ? "Equity" : "Position value"}</div><div class="v">${rub(paper ? cash + value : value)}</div><div class="h">${paper ? "virtual account" : "full balance is in the T-Bank app"}</div></div>
-    <div class="card stat"><div class="k">${paper ? "Cash" : "Equity at day start"}</div><div class="v">${rub(paper ? cash : rk.day_start_equity || null)}</div><div class="h">${pos.length} open position${pos.length === 1 ? "" : "s"}</div></div>
-    <div class="card stat"><div class="k">Unrealised P&amp;L</div><div class="v ${tone(upnl)}">${signed(upnl)}</div><div class="h">at the latest quotes</div></div>
-    <div class="card stat"><div class="k">Losses in a row</div><div class="v ${rk.consecutive_losses >= cfg.risk.max_consecutive_losses ? "bad" : ""}">${rk.consecutive_losses || 0} <span class="dim">/ ${cfg.risk.max_consecutive_losses}</span></div><div class="h">risk per trade ${num(cfg.risk.risk_per_trade * 100, 2)}%</div></div>
+    <div class="card stat"><div class="k">${paper ? t("Equity") : t("Position value")}</div><div class="v">${rub(paper ? cash + value : value)}</div><div class="h">${paper ? t("virtual account") : t("full balance is in the T-Bank app")}</div></div>
+    <div class="card stat"><div class="k">${paper ? t("Cash") : t("Equity at day start")}</div><div class="v">${rub(paper ? cash : rk.day_start_equity || null)}</div><div class="h">${pos.length} ${plural(pos.length, t("open position"), t("open positions"), ["открытая позиция", "открытые позиции", "открытых позиций"])}</div></div>
+    <div class="card stat"><div class="k">${esc(t("Unrealised P&L"))}</div><div class="v ${tone(upnl)}">${signed(upnl)}</div><div class="h">${t("at the latest quotes")}</div></div>
+    <div class="card stat"><div class="k">${t("Losses in a row")}</div><div class="v ${rk.consecutive_losses >= cfg.risk.max_consecutive_losses ? "bad" : ""}">${rk.consecutive_losses || 0} <span class="dim">/ ${cfg.risk.max_consecutive_losses}</span></div><div class="h">${t("risk per trade {0}%", num(cfg.risk.risk_per_trade * 100, 2))}</div></div>
   </div>
-  <div class="card flush"><h2>Open positions</h2>${pos.length ? `<div class="tw"><table><thead><tr><th>Stock</th><th class="n">Qty</th><th class="n">Entry</th><th class="n">Last</th><th class="n">Stop</th><th class="n">P&amp;L</th><th class="n">Z at entry</th><th class="n">TQS</th><th>Opened</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">No open positions in ${MODES[S.mode][0].toLowerCase()} mode.</div>`}</div>
-  <div class="card"><div class="row"><h2 class="grow">Recent activity</h2><a class="btn link small" href="#/logs">Full log</a></div>
-    <div class="log short">${S.log.length ? esc(S.log.slice(-12).join("\n")) : '<span class="dim">Nothing logged yet. Start trading or run one cycle.</span>'}</div></div>`;
+  <div class="card flush"><h2>${t("Open positions")}</h2>${pos.length ? `<div class="tw"><table><thead><tr><th>${t("Stock")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry")}</th><th class="n">${t("Last")}</th><th class="n">${t("Stop")}</th><th class="n">${esc(t("P&L"))}</th><th class="n">${t("Z at entry")}</th><th class="n">TQS</th><th>${t("Opened")}</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">${t("No open positions in this mode.")}</div>`}</div>
+  <div class="card"><div class="row"><h2 class="grow">${t("Recent activity")}</h2><a class="btn link small" href="#/logs">${t("Full log")}</a></div>
+    <div class="log short">${S.log.length ? esc(S.log.slice(-12).join("\n")) : `<span class="dim">${t("Nothing logged yet. Start trading or run one cycle.")}</span>`}</div></div>`;
 };
 ACT.mode = el => { S.mode = el.dataset.v; localStorage.setItem("mode", S.mode); render(); };
 ACT.start = async el => {
   const once = !!el.dataset.once;
   if (S.mode === "live") return liveModal(once);
-  try { await api("/api/trade/start", {mode: S.mode, once}); toast(once ? "Running one cycle…" : MODES[S.mode][0] + " trading started"); await refresh(); } catch (e) { fail(e); }
+  try { await api("/api/trade/start", {mode: S.mode, once}); toast(once ? t("Running one cycle…") : t("Started: {0}", t(MODES[S.mode][0]))); await refresh(); } catch (e) { fail(e); }
 };
-ACT.stop = async () => { try { await api("/api/trade/stop", {mode: S.mode}); toast("Stopping after the current cycle"); await refresh(); } catch (e) { fail(e); } };
-ACT.resetHalt = async () => { try { await api("/api/risk/reset", {mode: S.mode}); toast("Pause cleared"); await refresh(); } catch (e) { fail(e); } };
+ACT.stop = async () => { try { await api("/api/trade/stop", {mode: S.mode}); toast(t("Stopping after the current cycle")); await refresh(); } catch (e) { fail(e); } };
+ACT.resetHalt = async () => { try { await api("/api/risk/reset", {mode: S.mode}); toast(t("Pause cleared")); await refresh(); } catch (e) { fail(e); } };
 function liveModal(once) {
-  $("#modal").innerHTML = `<div class="modal"><div class="card"><h2 class="bad">Real money</h2>
-    <p style="margin-top:0">Live mode sends real orders to your T-Bank account, with risk of ${num(S.ov.config.risk.risk_per_trade * 100, 2)}% of capital per trade. Make sure paper and sandbox results satisfy you first.</p>
-    <label class="f">Type LIVE to confirm<input id="liveword" autocomplete="off"></label>
-    <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="closeModal">Cancel</button><button class="btn danger" data-act="startLive" data-once="${once ? 1 : ""}">${once ? "Run one live cycle" : "Start live trading"}</button></div></div></div>`;
+  $("#modal").innerHTML = `<div class="modal"><div class="card"><h2 class="bad">${t("Real money")}</h2>
+    <p style="margin-top:0">${t("Live mode sends real orders to your T-Bank account, with risk of {0}% of capital per trade. Make sure paper and sandbox results satisfy you first.", num(S.ov.config.risk.risk_per_trade * 100, 2))}</p>
+    <label class="f">${t("Type LIVE to confirm")}<input id="liveword" autocomplete="off"></label>
+    <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="closeModal">${t("Cancel")}</button><button class="btn danger" data-act="startLive" data-once="${once ? 1 : ""}">${once ? t("Run one live cycle") : t("Start live trading")}</button></div></div></div>`;
   $("#liveword").focus();
 }
 ACT.closeModal = () => { $("#modal").innerHTML = ""; };
 ACT.startLive = async el => {
-  try { await api("/api/trade/start", {mode: "live", once: !!el.dataset.once, confirm: $("#liveword").value.trim()}); ACT.closeModal(); toast("Live trading started"); await refresh(); } catch (e) { fail(e); }
+  try { await api("/api/trade/start", {mode: "live", once: !!el.dataset.once, confirm: $("#liveword").value.trim()}); ACT.closeModal(); toast(t("Started: {0}", t("Live"))); await refresh(); } catch (e) { fail(e); }
 };
 async function refresh() {
   try {
@@ -317,32 +577,32 @@ async function refresh() {
 }
 
 /* ---------- scanner ---------- */
-const srcSelect = (value, synthetic, handler) => `<select onchange="${handler}">${[["", "Auto"], ["tbank", "T-Bank"], ["moex", "MOEX"]].concat(synthetic ? [["synthetic", "Synthetic demo"]] : []).map(([v, n]) => `<option value="${v}" ${value === v ? "selected" : ""}>${n}</option>`).join("")}</select>`;
+const srcSelect = (value, synthetic, handler) => `<select onchange="${handler}">${[["", "Auto"], ["tbank", "T-Bank"], ["moex", "MOEX"]].concat(synthetic ? [["synthetic", "Synthetic demo"]] : []).map(([v, n]) => `<option value="${v}" ${value === v ? "selected" : ""}>${t(n)}</option>`).join("")}</select>`;
 VIEWS.scanner = () => {
   const sc = S.scan, st = S.ov && S.ov.config.stats, tq = S.ov && S.ov.config.tqs;
-  const head = `<div class="head"><h1>Scanner</h1>${sc ? `<span class="sub">${esc(sc.time.replace("T", " "))} · ${esc(sc.source)} data</span>` : ""}
-    ${srcSelect(S.scanSource, false, "S.scanSource=this.value")}<button class="btn primary" data-act="scan" ${S.scanBusy ? "disabled" : ""}>${S.scanBusy ? '<span class="spin"></span>Scanning…' : "Run scan"}</button></div>`;
-  if (!sc) return head + `<div class="card empty">${S.scanBusy ? "Downloading quotes and computing statistics…" : "Run a scan to see today's statistics and signals for every pair. No orders are placed."}</div>`;
+  const head = `<div class="head"><h1>${t("Scanner")}</h1>${sc ? `<span class="sub">${when(sc.time)} · ${t("{0} data", esc(srcName(sc.source)))}</span>` : ""}
+    ${srcSelect(S.scanSource, false, "S.scanSource=this.value")}<button class="btn primary" data-act="scan" ${S.scanBusy ? "disabled" : ""}>${S.scanBusy ? `<span class="spin"></span>${t("Scanning…")}` : t("Run scan")}</button></div>`;
+  if (!sc || !st) return head + `<div class="card empty">${S.scanBusy ? t("Downloading quotes and computing statistics…") : t("Run a scan to see today's statistics and signals for every pair. No orders are placed.")}</div>`;
   const mk = {strong: ["good", "Market strong · index above EMA200, EMA50 above EMA200"], neutral: ["warn", "Market neutral · index above EMA200"], weak: ["bad", "Market weak · index below EMA200, no buying"]}[sc.market] || ["", sc.market];
   const rows = sc.rows.map(r => {
     const id = r.pair, sig = (r.verdict || "").startsWith("BUY");
-    if (r.z == null && r.corr == null) return `<tr><td><b>${esc(id)}</b></td><td colspan="8" class="muted">${esc(r.verdict)}</td></tr>`;
+    if (r.z == null && r.corr == null) return `<tr><td><b>${esc(id)}</b></td><td colspan="9" class="muted">${esc(tr(r.verdict))}</td></tr>`;
     return `<tr class="click ${S.pair && S.pair.id === id ? "sel" : ""}" data-act="pair" data-v="${esc(id)}">
-      <td><b>${esc(id.split("/")[0])}</b> <span class="muted">vs ${esc(id.split("/")[1])}</span></td>
+      <td><b>${esc(id.split("/")[0])}</b> <span class="muted">${t("vs")} ${esc(id.split("/")[1])}</span></td>
       <td class="n ${r.corr > st.min_corr ? "" : "bad"}">${num(r.corr)}</td><td class="n">${num(r.corr60)}</td>
       <td class="n ${r.coint_p < st.max_coint_pvalue ? "" : "bad"}">${num(r.coint_p, 3)}</td><td class="n">${num(r.beta)}</td>
       <td class="n ${r.beta_chg < st.max_beta_change ? "" : "bad"}">${num(r.beta_chg * 100, 0)}%</td><td class="n">${r.half_life == null ? "∞" : num(r.half_life, 0)}</td>
       <td class="n ${r.z <= st.entry_z ? "good" : ""}"><b>${num(r.z)}</b></td>
       <td class="n"><span class="meter"><i style="width:${Math.min(100, r.tqs)}%;background:${r.tqs >= tq.min_score ? "var(--good)" : r.tqs >= tq.reduced_min_score ? "var(--warn)" : "var(--dim)"}"></i></span>${esc(r.tqs)}</td>
-      <td class="wrap">${sig ? `<span class="badge good">${esc(r.verdict)}</span>` : esc(r.verdict || "Screen 1 passed")}</td></tr>`;
+      <td class="wrap">${sig ? `<span class="badge good">${esc(tr(r.verdict))}</span>` : esc(tr(r.verdict) || t("Screen 1 passed"))}</td></tr>`;
   }).join("");
   const p = S.pair;
-  return head + `<div class="row" style="margin-bottom:14px"><span class="badge ${mk[0]}">${esc(mk[1])}</span>
-      <span class="sub">Entry needs correlation &gt; ${st.min_corr}, cointegration p &lt; ${st.max_coint_pvalue}, β change &lt; ${st.max_beta_change * 100}%, Z ≤ ${st.entry_z}, TQS ≥ ${tq.reduced_min_score}</span></div>
-    <div class="card flush"><div class="tw"><table><thead><tr><th>Buy</th><th class="n">Corr 120d</th><th class="n">Corr 60d</th><th class="n">Coint. p</th><th class="n">β</th><th class="n">β change</th><th class="n">Half-life</th><th class="n">Z-score</th><th class="n">TQS</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table></div></div>
-    ${S.pairBusy ? `<div class="card empty"><span class="spin"></span>Loading ${esc(S.pairBusy)} history…</div>` : p ? `<div class="grid g2">
-      <div class="card"><h2>${esc(p.buy)} vs ${esc(p.other)} · Z-score</h2><div class="legend"><span><i style="background:var(--good)"></i>entry ${st.entry_z}</span><span><i style="background:var(--muted)"></i>exit ${st.exit_z}</span></div><div class="chart" id="zchart"></div></div>
-      <div class="card"><h2>Price, start of period = 100</h2><div class="legend"><span><i style="background:var(--text)"></i>${esc(p.buy)}</span><span><i style="background:#6f8fd8"></i>${esc(p.other)}</span></div><div class="chart" id="pchart"></div></div></div>` : `<div class="sub">Select a row to see the Z-score history of that pair.</div>`}`;
+  return head + `<div class="row" style="margin-bottom:14px"><span class="badge ${mk[0]}">${esc(t(mk[1]))}</span>
+      <span class="sub">${esc(t("Entry needs correlation > {0}, cointegration p < {1}, β change < {2}%, Z ≤ {3}, TQS ≥ {4}", st.min_corr, st.max_coint_pvalue, st.max_beta_change * 100, st.entry_z, tq.reduced_min_score))}</span></div>
+    <div class="card flush"><div class="tw"><table><thead><tr><th>${t("Buy")}</th><th class="n">${t("Corr 120d")}</th><th class="n">${t("Corr 60d")}</th><th class="n">${t("Coint. p")}</th><th class="n">β</th><th class="n">${t("β change")}</th><th class="n">${t("Half-life")}</th><th class="n">${t("Z-score")}</th><th class="n">TQS</th><th>${t("Verdict")}</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+    ${S.pairBusy ? `<div class="card empty"><span class="spin"></span>${t("Loading {0} history…", esc(S.pairBusy))}</div>` : p ? `<div class="grid g2">
+      <div class="card"><h2>${esc(p.buy)} ${t("vs")} ${esc(p.other)} · Z-score</h2><div class="legend"><span><i style="background:var(--good)"></i>${t("entry {0}", st.entry_z)}</span><span><i style="background:var(--muted)"></i>${t("exit {0}", st.exit_z)}</span></div><div class="chart" id="zchart"></div></div>
+      <div class="card"><h2>${t("Price, start of period = 100")}</h2><div class="legend"><span><i style="background:var(--text)"></i>${esc(p.buy)}</span><span><i style="background:#6f8fd8"></i>${esc(p.other)}</span></div><div class="chart" id="pchart"></div></div></div>` : `<div class="sub">${t("Select a row to see the Z-score history of that pair.")}</div>`}`;
 };
 AFTER.scanner = () => {
   const p = S.pair, st = S.ov && S.ov.config.stats;
@@ -364,42 +624,43 @@ ACT.pair = async el => {
 
 /* ---------- backtest ---------- */
 const REASON = {stop: "bad", mean_reversion: "good", target: "good", pair_breakdown: "warn", time_stop: ""};
-const reason = r => `<span class="badge ${REASON[r] || ""}">${esc(String(r).replace(/_/g, " "))}</span>`;
+const reasonText = r => t(String(r).replace(/_/g, " "));
+const reason = r => `<span class="badge ${REASON[r] || ""}">${esc(reasonText(r))}</span>`;
 VIEWS.backtest = () => {
   const f = S.btForm, b = S.bt, w = S.wf, busy = S.btBusy || S.wfBusy;
-  let out = `<div class="head"><h1>Backtest</h1>${b && b.time ? `<span class="sub">last run ${esc(b.time.replace("T", " "))} · ${esc(b.source)} data</span>` : ""}</div>
+  let out = `<div class="head"><h1>${t("Backtest")}</h1>${b && b.time ? `<span class="sub">${t("last run {0}", when(b.time))} · ${t("{0} data", esc(srcName(b.source)))}</span>` : ""}</div>
   <div class="card row" style="align-items:flex-end">
-    <label class="f">Data${srcSelect(f.source, true, "S.btForm.source=this.value")}</label>
-    <label class="f">From<input type="date" value="${esc(f.start)}" onchange="S.btForm.start=this.value"></label>
-    <label class="f">To<input type="date" value="${esc(f.end)}" onchange="S.btForm.end=this.value"></label>
-    <span class="sub grow">Empty dates = the last 5 years. Signals at the close, fills at the next open.</span>
-    <button class="btn" data-act="walkforward" ${busy ? "disabled" : ""}>${S.wfBusy ? '<span class="spin"></span>Running…' : "Walk-forward"}</button>
-    <button class="btn primary" data-act="backtest" ${busy ? "disabled" : ""}>${S.btBusy ? '<span class="spin"></span>Running…' : "Run backtest"}</button></div>`;
-  if (busy) out += `<div class="banner"><span><span class="spin"></span>${S.wfBusy ? "Walk-forward tunes parameters on several windows and can take a few minutes." : "Downloading history and simulating. The first run takes the longest."}</span></div>`;
+    <label class="f">${t("Data")}${srcSelect(f.source, true, "S.btForm.source=this.value")}</label>
+    <label class="f">${t("From")}<input type="date" value="${esc(f.start)}" onchange="S.btForm.start=this.value"></label>
+    <label class="f">${t("To")}<input type="date" value="${esc(f.end)}" onchange="S.btForm.end=this.value"></label>
+    <span class="sub grow">${t("Empty dates = the last 5 years. Signals at the close, fills at the next open.")}</span>
+    <button class="btn" data-act="walkforward" ${busy ? "disabled" : ""}>${S.wfBusy ? `<span class="spin"></span>${t("Running…")}` : t("Walk-forward")}</button>
+    <button class="btn primary" data-act="backtest" ${busy ? "disabled" : ""}>${S.btBusy ? `<span class="spin"></span>${t("Running…")}` : t("Run backtest")}</button></div>`;
+  if (busy) out += `<div class="banner"><span><span class="spin"></span>${S.wfBusy ? t("Walk-forward tunes parameters on several windows and can take a few minutes.") : t("Downloading history and simulating. The first run takes the longest.")}</span></div>`;
   if (b && b.metrics) {
     const m = b.metrics;
-    if (b.source === "synthetic") out += `<div class="banner"><span>Synthetic data: this shows how the mechanics work, not how the strategy performs on the market.</span></div>`;
+    if (b.source === "synthetic") out += `<div class="banner"><span>${t("Synthetic data: this shows how the mechanics work, not how the strategy performs on the market.")}</span></div>`;
     out += `<div class="grid g5">
-      <div class="card stat"><div class="k">Net profit</div><div class="v ${tone(m.net_profit)}">${signed(m.net_profit)}</div><div class="h">${num(m.return_pct)}% on ${rub(b.capital)}</div></div>
-      <div class="card stat"><div class="k">Max drawdown</div><div class="v">${num(m.max_drawdown_pct)}%</div><div class="h">${rub(m.max_drawdown)}</div></div>
-      <div class="card stat"><div class="k">Trades</div><div class="v">${m.trades}</div><div class="h">${m.trades ? "avg hold " + num(m.avg_holding_days, 1) + " days" : "no signal passed the filters"}</div></div>
-      <div class="card stat"><div class="k">Win rate</div><div class="v">${m.trades ? num(m.win_rate_pct, 1) + "%" : "—"}</div><div class="h">${m.trades ? "longest losing streak " + m.max_losing_streak : ""}</div></div>
-      <div class="card stat"><div class="k">Avg win / loss</div><div class="v" style="font-size:17px;padding-top:5px">${m.trades ? `<span class="good">${num(m.avg_win, 0)}</span> / <span class="bad">${num(m.avg_loss, 0)}</span>` : "—"}</div><div class="h">recovery factor ${m.recovery_factor == null ? "—" : num(m.recovery_factor)}</div></div></div>
-    <div class="card"><h2>Equity</h2><div class="chart" id="eq"></div></div>`;
+      <div class="card stat"><div class="k">${t("Net profit")}</div><div class="v ${tone(m.net_profit)}">${signed(m.net_profit)}</div><div class="h">${t("{0}% on {1}", num(m.return_pct), rub(b.capital))}</div></div>
+      <div class="card stat"><div class="k">${t("Max drawdown")}</div><div class="v">${num(m.max_drawdown_pct)}%</div><div class="h">${rub(m.max_drawdown)}</div></div>
+      <div class="card stat"><div class="k">${t("Trades")}</div><div class="v">${m.trades}</div><div class="h">${m.trades ? t("avg hold {0} days", num(m.avg_holding_days, 1)) : t("no signal passed the filters")}</div></div>
+      <div class="card stat"><div class="k">${t("Win rate")}</div><div class="v">${m.trades ? num(m.win_rate_pct, 1) + "%" : "—"}</div><div class="h">${m.trades ? t("longest losing streak {0}", m.max_losing_streak) : ""}</div></div>
+      <div class="card stat"><div class="k">${t("Avg win / loss")}</div><div class="v" style="font-size:17px;padding-top:5px">${m.trades ? `<span class="good">${num(m.avg_win, 0)}</span> / <span class="bad">${num(m.avg_loss, 0)}</span>` : "—"}</div><div class="h">${t("recovery factor {0}", m.recovery_factor == null ? "—" : num(m.recovery_factor))}</div></div></div>
+    <div class="card"><h2>${t("Equity")}</h2><div class="chart" id="eq"></div></div>`;
     if (m.trades) {
-      const bars = (obj, money) => { const mx = Math.max(...Object.values(obj).map(Math.abs), 1); return `<div class="bars">${Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div><span>${esc(k.replace(/_/g, " "))}</span><span class="b"><i style="width:${Math.abs(v) / mx * 100}%;background:${money ? (v >= 0 ? "var(--good)" : "var(--bad)") : "var(--muted)"}"></i></span><span class="${money ? tone(v) : ""}">${money ? signed(v) : v}</span></div>`).join("")}</div>`; };
-      out += `<div class="grid g2"><div class="card"><h2>P&amp;L by pair</h2>${bars(m.pnl_by_pair, true)}</div><div class="card"><h2>Exit reasons</h2>${bars(m.exits, false)}</div></div>
-      <div class="card flush"><h2>Trades</h2><div class="tw" style="max-height:440px"><table><thead><tr><th>Bought</th><th>Entry</th><th>Exit</th><th class="n">Days</th><th class="n">Qty</th><th class="n">Entry price</th><th class="n">Exit price</th><th class="n">Z</th><th class="n">TQS</th><th>Exit reason</th><th class="n">P&amp;L</th></tr></thead><tbody>
-      ${b.trades.map(t => `<tr><td><b>${esc(t.bought)}</b> <span class="muted">vs ${esc(t.pair.split("/")[1])}</span></td><td>${esc(t.entry_date)}</td><td>${esc(t.exit_date)}</td><td class="n">${t.days_held}</td><td class="n">${num(t.qty, 0)}</td><td class="n">${num(t.entry_price)}</td><td class="n">${num(t.exit_price)}</td><td class="n">${num(t.z_entry)}</td><td class="n">${t.tqs}</td><td>${reason(t.reason)}</td><td class="n ${tone(t.pnl)}">${signed(t.pnl)}</td></tr>`).join("")}</tbody></table></div></div>`;
+      const bars = (obj, money) => { const mx = Math.max(...Object.values(obj).map(Math.abs), 1); return `<div class="bars">${Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div><span>${esc(money ? k : reasonText(k))}</span><span class="b"><i style="width:${Math.abs(v) / mx * 100}%;background:${money ? (v >= 0 ? "var(--good)" : "var(--bad)") : "var(--muted)"}"></i></span><span class="${money ? tone(v) : ""}">${money ? signed(v) : v}</span></div>`).join("")}</div>`; };
+      out += `<div class="grid g2"><div class="card"><h2>${esc(t("P&L by pair"))}</h2>${bars(m.pnl_by_pair, true)}</div><div class="card"><h2>${t("Exit reasons")}</h2>${bars(m.exits, false)}</div></div>
+      <div class="card flush"><h2>${t("Trades")}</h2><div class="tw" style="max-height:440px"><table><thead><tr><th>${t("Bought")}</th><th>${t("Entry")}</th><th>${t("Exit")}</th><th class="n">${t("Days")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry price")}</th><th class="n">${t("Exit price")}</th><th class="n">Z</th><th class="n">TQS</th><th>${t("Exit reason")}</th><th class="n">${esc(t("P&L"))}</th></tr></thead><tbody>
+      ${b.trades.map(x => `<tr><td><b>${esc(x.bought)}</b> <span class="muted">${t("vs")} ${esc(x.pair.split("/")[1])}</span></td><td>${esc(x.entry_date)}</td><td>${esc(x.exit_date)}</td><td class="n">${x.days_held}</td><td class="n">${num(x.qty, 0)}</td><td class="n">${num(x.entry_price)}</td><td class="n">${num(x.exit_price)}</td><td class="n">${num(x.z_entry)}</td><td class="n">${x.tqs}</td><td>${reason(x.reason)}</td><td class="n ${tone(x.pnl)}">${signed(x.pnl)}</td></tr>`).join("")}</tbody></table></div></div>`;
     }
-  } else if (!busy) out += `<div class="card empty">Run a backtest to simulate the strategy on daily history with your current settings.</div>`;
-  if (w) out += `<div class="card flush"><h2>Walk-forward · out-of-sample total <span class="${tone(w.total)}">${signed(w.total)}</span> · ${esc(w.source)} data</h2>${w.folds.length ? `<div class="tw"><table><thead><tr><th>Tuned on</th><th>Tested on</th><th class="n">Entry Z</th><th class="n">Exit Z</th><th class="n">Stop</th><th class="n">Trades</th><th class="n">Win rate</th><th class="n">Max DD</th><th class="n">Net profit</th></tr></thead><tbody>
-    ${w.folds.map(x => `<tr><td>${esc(x.train)}</td><td>${esc(x.test)}</td><td class="n">${x.entry_z}</td><td class="n">${x.exit_z}</td><td class="n">${num(x.stop_pct * 100, 1)}%</td><td class="n">${x.trades}</td><td class="n">${x.win_rate_pct == null ? "—" : num(x.win_rate_pct, 0) + "%"}</td><td class="n">${num(x.max_drawdown_pct)}%</td><td class="n ${tone(x.net_profit)}">${signed(x.net_profit)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Not enough history for one tuning window plus one test window.</div>`}</div>`;
+  } else if (!busy) out += `<div class="card empty">${t("Run a backtest to simulate the strategy on daily history with your current settings.")}</div>`;
+  if (w) out += `<div class="card flush"><h2>${t("Walk-forward")} · ${t("out-of-sample total")} <span class="${tone(w.total)}">${signed(w.total)}</span> · ${t("{0} data", esc(srcName(w.source)))}</h2>${w.folds.length ? `<div class="tw"><table><thead><tr><th>${t("Tuned on")}</th><th>${t("Tested on")}</th><th class="n">${t("Entry Z")}</th><th class="n">${t("Exit Z")}</th><th class="n">${t("Stop")}</th><th class="n">${t("Trades")}</th><th class="n">${t("Win rate")}</th><th class="n">${t("Max DD")}</th><th class="n">${t("Net profit")}</th></tr></thead><tbody>
+    ${w.folds.map(x => `<tr><td>${esc(x.train)}</td><td>${esc(x.test)}</td><td class="n">${num(x.entry_z)}</td><td class="n">${num(x.exit_z)}</td><td class="n">${num(x.stop_pct * 100, 1)}%</td><td class="n">${x.trades}</td><td class="n">${x.win_rate_pct == null ? "—" : num(x.win_rate_pct, 0) + "%"}</td><td class="n">${num(x.max_drawdown_pct)}%</td><td class="n ${tone(x.net_profit)}">${signed(x.net_profit)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">${t("Not enough history for one tuning window plus one test window.")}</div>`}</div>`;
   return out;
 };
 AFTER.backtest = () => {
   const b = S.bt;
-  if (b && b.equity && b.equity.length) chart($("#eq"), {labels: b.equity.map(e => e[0]), series: [{name: "Equity", color: "#4fd1a5", data: b.equity.map(e => e[1])}], hlines: [{y: b.capital, color: "#5a606a"}], height: 260, fmt: v => num(v, 0)});
+  if (b && b.equity && b.equity.length) chart($("#eq"), {labels: b.equity.map(e => e[0]), series: [{name: t("Equity"), color: "#4fd1a5", data: b.equity.map(e => e[1])}], hlines: [{y: b.capital, color: "#5a606a"}], height: 260, fmt: v => num(v, 0)});
 };
 ENTER.backtest = async () => { if (!S.bt) { try { const last = await api("/api/backtest/last"); if (last.metrics && !S.bt) { S.bt = last; render(); } } catch (e) {} } };
 ACT.backtest = async () => {
@@ -414,23 +675,24 @@ ACT.walkforward = async () => {
 };
 
 /* ---------- journal ---------- */
+const PASSPORT_COL = {date: "Date", corr: "Corr 120d", corr60: "Corr 60d", coint_p: "Coint. p", beta: "β", beta_chg: "β change", half_life: "Half-life", z: "Z-score", tqs: "TQS"};
 VIEWS.journal = () => {
   const j = S.journal;
-  if (!j) return `<div class="head"><h1>Journal</h1></div><div class="card empty"><span class="spin"></span>Loading…</div>`;
-  const trades = j.trades.filter(t => S.jMode === "all" || t.mode === S.jMode).reverse();
-  const pnl = trades.reduce((s, t) => s + Number(t.pnl || 0), 0), wins = trades.filter(t => Number(t.pnl) > 0).length;
-  const seg = `<div class="seg">${["all", "paper", "sandbox", "live"].map(m => `<button data-act="jmode" data-v="${m}" class="${S.jMode === m ? "on" : ""}">${m === "all" ? "All" : MODES[m][0]}</button>`).join("")}</div>`;
+  if (!j) return `<div class="head"><h1>${t("Journal")}</h1></div><div class="card empty"><span class="spin"></span>${t("Loading…")}</div>`;
+  const trades = j.trades.filter(x => S.jMode === "all" || x.mode === S.jMode).reverse();
+  const pnl = trades.reduce((s, x) => s + Number(x.pnl || 0), 0), wins = trades.filter(x => Number(x.pnl) > 0).length;
+  const seg = `<div class="seg">${["all", "paper", "sandbox", "live"].map(m => `<button data-act="jmode" data-v="${m}" class="${S.jMode === m ? "on" : ""}">${m === "all" ? t("All") : t(MODES[m][0])}</button>`).join("")}</div>`;
   const pp = S.passport;
-  return `<div class="head"><h1>Journal</h1>${seg}</div>
+  return `<div class="head"><h1>${t("Journal")}</h1>${seg}</div>
   <div class="grid g4">
-    <div class="card stat"><div class="k">Closed trades</div><div class="v">${trades.length}</div></div>
-    <div class="card stat"><div class="k">Result</div><div class="v ${tone(pnl)}">${signed(pnl)}</div></div>
-    <div class="card stat"><div class="k">Win rate</div><div class="v">${trades.length ? num(wins / trades.length * 100, 0) + "%" : "—"}</div></div>
-    <div class="card stat"><div class="k">Stopped out</div><div class="v">${trades.filter(t => t.reason === "stop").length}</div></div></div>
-  <div class="card flush"><h2>Trades</h2>${trades.length ? `<div class="tw" style="max-height:460px"><table><thead><tr><th>Mode</th><th>Bought</th><th>Entry</th><th>Exit</th><th class="n">Qty</th><th class="n">Entry price</th><th class="n">Exit price</th><th class="n">Stop</th><th class="n">Z in</th><th class="n">Z out</th><th class="n">TQS</th><th>Exit reason</th><th class="n">P&amp;L</th></tr></thead><tbody>
-    ${trades.map(t => `<tr><td class="muted">${esc(t.mode)}</td><td><b>${esc(t.bought)}</b> <span class="muted">vs ${esc((t.pair || "").split("/")[1])}</span></td><td>${esc(t.entry_date)}</td><td>${esc(t.exit_date)}</td><td class="n">${num(t.qty, 0)}</td><td class="n">${num(t.entry_price)}</td><td class="n">${num(t.exit_price)}</td><td class="n">${num(t.stop)}</td><td class="n">${num(t.z_entry)}</td><td class="n">${num(t.z_exit)}</td><td class="n">${esc(t.tqs)}</td><td>${reason(t.reason)}</td><td class="n ${tone(Number(t.pnl))}">${signed(Number(t.pnl))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No closed trades yet. Every trade the bot closes is recorded here.</div>`}</div>
-  <div class="card flush"><div class="row" style="padding:16px 20px 0"><h2 class="grow" style="margin:0">Pair passports</h2>${j.passports.length ? `<select onchange="loadPassport(this.value)"><option value="">Choose a pair…</option>${j.passports.map(n => `<option ${pp && pp.name === n ? "selected" : ""} value="${esc(n)}">${esc(n.replace("_", " vs "))}</option>`).join("")}</select>` : ""}</div>
-    ${pp && pp.rows.length ? `<div class="tw" style="max-height:360px;margin-top:10px"><table><thead><tr>${Object.keys(pp.rows[0]).map((k, i) => `<th class="${i ? "n" : ""}">${esc(label(k))}</th>`).join("")}</tr></thead><tbody>${pp.rows.slice().reverse().map(r => `<tr>${Object.values(r).map((v, i) => `<td class="${i ? "n" : ""}">${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<div class="empty">${j.passports.length ? "Daily statistics of each pair, recorded while the bot trades." : "Passports appear after the bot has run at least one trading cycle."}</div>`}</div>`;
+    <div class="card stat"><div class="k">${t("Closed trades")}</div><div class="v">${trades.length}</div></div>
+    <div class="card stat"><div class="k">${t("Result")}</div><div class="v ${tone(pnl)}">${signed(pnl)}</div></div>
+    <div class="card stat"><div class="k">${t("Win rate")}</div><div class="v">${trades.length ? num(wins / trades.length * 100, 0) + "%" : "—"}</div></div>
+    <div class="card stat"><div class="k">${t("Stopped out")}</div><div class="v">${trades.filter(x => x.reason === "stop").length}</div></div></div>
+  <div class="card flush"><h2>${t("Trades")}</h2>${trades.length ? `<div class="tw" style="max-height:460px"><table><thead><tr><th>${t("Mode")}</th><th>${t("Bought")}</th><th>${t("Entry")}</th><th>${t("Exit")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry price")}</th><th class="n">${t("Exit price")}</th><th class="n">${t("Stop")}</th><th class="n">${t("Z in")}</th><th class="n">${t("Z out")}</th><th class="n">TQS</th><th>${t("Exit reason")}</th><th class="n">${esc(t("P&L"))}</th></tr></thead><tbody>
+    ${trades.map(x => `<tr><td class="muted">${esc(MODES[x.mode] ? t(MODES[x.mode][0]) : x.mode)}</td><td><b>${esc(x.bought)}</b> <span class="muted">${t("vs")} ${esc((x.pair || "").split("/")[1])}</span></td><td>${esc(x.entry_date)}</td><td>${esc(x.exit_date)}</td><td class="n">${num(x.qty, 0)}</td><td class="n">${num(x.entry_price)}</td><td class="n">${num(x.exit_price)}</td><td class="n">${num(x.stop)}</td><td class="n">${num(x.z_entry)}</td><td class="n">${num(x.z_exit)}</td><td class="n">${esc(x.tqs)}</td><td>${reason(x.reason)}</td><td class="n ${tone(Number(x.pnl))}">${signed(Number(x.pnl))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">${t("No closed trades yet. Every trade the bot closes is recorded here.")}</div>`}</div>
+  <div class="card flush"><div class="row" style="padding:16px 20px 0"><h2 class="grow" style="margin:0">${t("Pair passports")}</h2>${j.passports.length ? `<select onchange="loadPassport(this.value)"><option value="">${t("Choose a pair…")}</option>${j.passports.map(n => `<option ${pp && pp.name === n ? "selected" : ""} value="${esc(n)}">${esc(n.replace("_", " " + t("vs") + " "))}</option>`).join("")}</select>` : ""}</div>
+    ${pp && pp.rows.length ? `<div class="tw" style="max-height:360px;margin-top:10px"><table><thead><tr>${Object.keys(pp.rows[0]).map((k, i) => `<th class="${i ? "n" : ""}">${esc(PASSPORT_COL[k] ? t(PASSPORT_COL[k]) : label(k))}</th>`).join("")}</tr></thead><tbody>${pp.rows.slice().reverse().map(r => `<tr>${Object.values(r).map((v, i) => `<td class="${i ? "n" : ""}">${esc(i && v !== "" && !isNaN(v) ? num(v, String(v).includes(".") ? 3 : 0) : v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<div class="empty">${j.passports.length ? t("Daily statistics of each pair, recorded while the bot trades.") : t("Passports appear after the bot has run at least one trading cycle.")}</div>`}</div>`;
 };
 ENTER.journal = async () => { try { S.journal = await api("/api/journal"); render(); } catch (e) { fail(e); } };
 ACT.jmode = el => { S.jMode = el.dataset.v; render(); };
@@ -444,79 +706,80 @@ const SECTION = {general: ["General", "Capital and market data"], stats: ["Scree
   entry: ["Screen 3 · entry", "15-minute chart filter used in paper, sandbox and live modes"], tqs: ["Trade quality score", "Which scores are allowed to trade"],
   risk: ["Risk and money management", "Fractions of capital: 0.005 means 0.5%"], costs: ["Costs", "Used by the simulations"],
   live: ["Trading session", "Times are Moscow time"], walkforward: ["Walk-forward", "Parameter values tried on each tuning window"]};
+const fieldText = (sec, f) => (LANG === "ru" && FIELD_RU[sec + "." + f.key]) || [label(f.key), f.hint];
 function fieldInput(sec, f) {
   const a = `data-sec="${sec}" data-key="${f.key}" data-type="${f.type}"`;
   if (f.type === "bool") return `<div class="c"><input type="checkbox" ${a} ${f.value ? "checked" : ""}></div>`;
-  if (f.type === "list") return `<input ${a} value="${esc(f.value.join(", "))}" placeholder="comma separated">`;
+  if (f.type === "list") return `<input ${a} value="${esc(f.value.join(", "))}" placeholder="${t("comma separated")}">`;
   if (f.key === "data_source") return `<select ${a}>${["auto", "tbank", "moex", "synthetic"].map(v => `<option ${f.value === v ? "selected" : ""}>${v}</option>`).join("")}</select>`;
   return `<input ${a} ${f.type === "str" ? "" : 'inputmode="decimal"'} value="${esc(f.value)}">`;
 }
 VIEWS.settings = () => {
   const c = S.cfg, o = S.ov;
-  if (!c) return `<div class="head"><h1>Settings</h1></div><div class="card empty"><span class="spin"></span>Loading…</div>`;
-  const acc = S.accounts;
-  let out = `<div class="head"><h1>Settings</h1><span class="sub">${o ? esc(o.folder) : ""}</span></div>
-  <div class="card"><h2>T-Bank connection</h2>
-    <div class="row" style="margin-bottom:14px"><span class="badge ${o && o.token_set ? "good" : "warn"}">${o && o.token_set ? "Token saved" : "No token"}</span>
-      <span class="sub">${o && o.token_set ? "Stored in the .env file in the bot folder. It is never shown again here." : "Without a token the bot reads delayed public MOEX quotes and can only simulate. Create one in T-Investments → Settings → T-Invest API tokens."}</span></div>
+  if (!c) return `<div class="head"><h1>${t("Settings")}</h1></div><div class="card empty"><span class="spin"></span>${t("Loading…")}</div>`;
+  const acc = S.accounts, has = o && o.token_set;
+  let out = `<div class="head"><h1>${t("Settings")}</h1><span class="sub">${o ? esc(o.folder) : ""}</span></div>
+  <div class="card"><h2>${t("T-Bank connection")}</h2>
+    <div class="row" style="margin-bottom:14px"><span class="badge ${has ? "good" : "warn"}">${has ? t("Token saved") : t("No token")}</span>
+      <span class="sub grow">${has ? t("Stored in the .env file in the bot folder. It is never shown again here.") : t("Without a token the bot reads delayed public MOEX quotes and can only simulate. Create one in T-Investments → Settings → T-Invest API tokens.")}</span></div>
     <div class="row" style="align-items:flex-end">
-      <label class="f grow">${o && o.token_set ? "Replace token" : "Token"}<input id="tok" type="password" autocomplete="off" placeholder="t.…"></label>
-      <label class="f">Account ID <input id="acc" autocomplete="off" placeholder="only with several accounts" style="width:230px"></label>
-      <button class="btn primary" data-act="saveToken">Save</button>
-      <button class="btn" data-act="testToken" ${o && o.token_set ? "" : "disabled"}>Test</button>
-      <button class="btn" data-act="testToken" data-sandbox="1" ${o && o.token_set ? "" : "disabled"}>Test sandbox</button>
-      ${o && o.token_set ? `<button class="btn link" data-act="clearToken">Remove</button>` : ""}</div>
-    ${acc ? `<div style="margin-top:14px">${acc.length ? `<table><thead><tr><th>Account</th><th>ID</th><th>Type</th><th>Access</th><th></th></tr></thead><tbody>${acc.map(a => `<tr><td>${esc(a.name || "—")}</td><td class="mono">${esc(a.id)}</td><td class="muted">${esc(String(a.type).replace("ACCOUNT_TYPE_", ""))}</td><td class="muted">${esc(String(a.access).replace("ACCOUNT_ACCESS_LEVEL_", ""))}</td><td class="n"><button class="btn small" data-act="useAccount" data-v="${esc(a.id)}">Use this account</button></td></tr>`).join("")}</tbody></table>` : `<span class="sub">Connected. No accounts yet: a sandbox account is opened automatically on the first sandbox run.</span>`}</div>` : ""}</div>`;
-  if (c.error) out += `<div class="banner bad"><div><b>config.toml has an error</b><pre>${esc(c.error)}</pre>Fix it in the file editor below.</div></div>`;
+      <label class="f grow">${has ? t("Replace token") : t("Token")}<input id="tok" type="password" autocomplete="off" placeholder="t.…"></label>
+      <label class="f">${t("Account ID")} <input id="acc" autocomplete="off" placeholder="${t("only with several accounts")}" style="width:240px"></label>
+      <button class="btn primary" data-act="saveToken">${t("Save")}</button>
+      <button class="btn" data-act="testToken" ${has ? "" : "disabled"}>${t("Test")}</button>
+      <button class="btn" data-act="testToken" data-sandbox="1" ${has ? "" : "disabled"}>${t("Test sandbox")}</button>
+      ${has ? `<button class="btn link" data-act="clearToken">${t("Remove")}</button>` : ""}</div>
+    ${acc ? `<div style="margin-top:14px">${acc.length ? `<table><thead><tr><th>${t("Account")}</th><th>ID</th><th>${t("Type")}</th><th>${t("Access")}</th><th></th></tr></thead><tbody>${acc.map(a => `<tr><td>${esc(a.name || "—")}</td><td class="mono">${esc(a.id)}</td><td class="muted">${esc(String(a.type).replace("ACCOUNT_TYPE_", ""))}</td><td class="muted">${esc(String(a.access).replace("ACCOUNT_ACCESS_LEVEL_", ""))}</td><td class="n"><button class="btn small" data-act="useAccount" data-v="${esc(a.id)}">${t("Use this account")}</button></td></tr>`).join("")}</tbody></table>` : `<span class="sub">${t("Connected. No accounts yet: a sandbox account is opened automatically on the first sandbox run.")}</span>`}</div>` : ""}</div>`;
+  if (c.error) out += `<div class="banner bad"><div><b>${t("config.toml has an error")}</b><pre>${esc(tr(c.error))}</pre>${t("Fix it in the file editor below.")}</div></div>`;
   else {
-    out += `<div class="card"><h2>Pairs</h2><div class="sub" style="margin-bottom:10px">Stocks of the same sector. The bot buys whichever of the two is lagging.</div><div id="pairs"></div></div>`;
-    for (const s of c.sections) out += `<div class="card"><h2>${SECTION[s.name][0]}</h2><div class="sub" style="margin:-6px 0 8px">${SECTION[s.name][1]}</div><div class="fields">${s.fields.map(f => `<div class="field"><div class="l"><b>${esc(label(f.key))}</b><span>${esc(f.hint)}</span></div>${fieldInput(s.name, f)}</div>`).join("")}</div></div>`;
+    out += `<div class="card"><h2>${t("Pairs")}</h2><div class="sub" style="margin-bottom:10px">${t("Stocks of the same sector. The bot buys whichever of the two is lagging.")}</div><div id="pairs"></div></div>`;
+    for (const s of c.sections) out += `<div class="card"><h2>${t(SECTION[s.name][0])}</h2><div class="sub" style="margin:-6px 0 8px">${t(SECTION[s.name][1])}</div><div class="fields">${s.fields.map(f => { const [name, hint] = fieldText(s.name, f); return `<div class="field"><div class="l"><b>${esc(name)}</b><span>${esc(hint)}</span></div>${fieldInput(s.name, f)}</div>`; }).join("")}</div></div>`;
   }
-  out += `<div class="card"><details ${c.error ? "open" : ""}><summary>Edit config.toml as text</summary><textarea id="raw" rows="22" spellcheck="false" style="margin-top:12px">${esc(c.raw)}</textarea>
-    <div class="row" style="margin-top:10px"><button class="btn" data-act="saveRaw">Save file</button><span class="sub">The file is checked before saving; the previous version is kept as config.toml.bak.</span></div></details></div>`;
-  if (!c.error) out += `<div class="savebar"><button class="btn primary" data-act="saveConfig">Save settings</button><button class="btn link" data-act="reloadConfig">Discard changes</button><span class="sub">A running trading process picks up new settings after it is restarted.</span></div>`;
+  out += `<div class="card"><details ${c.error ? "open" : ""}><summary>${t("Edit config.toml as text")}</summary><textarea id="raw" rows="22" spellcheck="false" style="margin-top:12px">${esc(c.raw)}</textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="saveRaw">${t("Save file")}</button><span class="sub">${t("The file is checked before saving; the previous version is kept as config.toml.bak.")}</span></div></details></div>`;
+  if (!c.error) out += `<div class="savebar"><button class="btn primary" data-act="saveConfig">${t("Save settings")}</button><button class="btn link" data-act="reloadConfig">${t("Discard changes")}</button><span class="sub">${t("A running trading process picks up new settings after it is restarted.")}</span></div>`;
   return out;
 };
 function drawPairs() {
   const el = $("#pairs"); if (!el) return;
-  el.innerHTML = `<table style="width:auto"><thead><tr><th>Stock A</th><th>Stock B</th><th>Sector</th><th></th></tr></thead><tbody>${S.cfgPairs.map((p, i) => `<tr>${["a", "b", "sector"].map(k => `<td style="padding:5px 10px 5px 0;border:0"><input value="${esc(p[k])}" oninput="S.cfgPairs[${i}].${k}=this.value" style="width:${k === "sector" ? 150 : 110}px;${k === "sector" ? "" : "text-transform:uppercase"}"></td>`).join("")}<td style="border:0;padding:5px 0"><button class="btn link" data-act="delPair" data-v="${i}">Remove</button></td></tr>`).join("")}</tbody></table>
-    <button class="btn small" data-act="addPair" style="margin-top:8px">Add pair</button>`;
+  el.innerHTML = `<table style="width:auto"><thead><tr><th>${t("Stock A")}</th><th>${t("Stock B")}</th><th>${t("Sector")}</th><th></th></tr></thead><tbody>${S.cfgPairs.map((p, i) => `<tr>${["a", "b", "sector"].map(k => `<td style="padding:5px 10px 5px 0;border:0"><input value="${esc(p[k])}" oninput="S.cfgPairs[${i}].${k}=this.value" style="width:${k === "sector" ? 150 : 110}px;${k === "sector" ? "" : "text-transform:uppercase"}"></td>`).join("")}<td style="border:0;padding:5px 0"><button class="btn link" data-act="delPair" data-v="${i}">${t("Remove")}</button></td></tr>`).join("")}</tbody></table>
+    <button class="btn small" data-act="addPair" style="margin-top:8px">${t("Add pair")}</button>`;
 }
 AFTER.settings = drawPairs;
 ENTER.settings = async () => { try { S.cfg = await api("/api/config"); S.cfgPairs = S.cfg.pairs.map(p => ({...p})); S.accounts = null; render(); } catch (e) { fail(e); } };
 ACT.reloadConfig = () => ENTER.settings();
 ACT.addPair = () => { S.cfgPairs.push({a: "", b: "", sector: ""}); drawPairs(); };
 ACT.delPair = el => { S.cfgPairs.splice(Number(el.dataset.v), 1); drawPairs(); };
-function saved(r, what) { toast(what + (r.restart && r.restart.length ? ". Restart " + r.restart.join(", ") + " trading to apply." : "")); }
+function saved(r, what) { toast(what + (r.restart && r.restart.length ? ". " + t("Restart trading to apply: {0}.", r.restart.map(m => t(MODES[m][0])).join(", ")) : "")); }
 ACT.saveConfig = async () => {
   const values = {}, orig = Object.fromEntries(S.cfg.sections.map(s => [s.name, Object.fromEntries(s.fields.map(f => [f.key, f.value]))]));
   for (const el of document.querySelectorAll("[data-sec]")) {
     const {sec, key, type} = el.dataset;
     let v = type === "bool" ? el.checked : el.value.trim();
     if (type === "list") { v = v.split(",").map(x => x.trim()).filter(Boolean); if (v.length && v.every(x => x !== "" && !isNaN(x))) v = v.map(Number); }
-    else if (type === "int" || type === "float") { v = v.replace(",", "."); if (v === "" || isNaN(v)) return toast(label(key) + " must be a number", true); v = Number(v); }
+    else if (type === "int" || type === "float") { v = v.replace(",", "."); if (v === "" || isNaN(v)) return toast(t("{0} must be a number", fieldText(sec, {key, hint: ""})[0]), true); v = Number(v); }
     if (JSON.stringify(v) !== JSON.stringify(orig[sec][key])) (values[sec] ||= {})[key] = v;
   }
-  try { saved(await api("/api/config", {values, pairs: S.cfgPairs}), "Settings saved"); await refresh(); await ENTER.settings(); } catch (e) { fail(e); }
+  try { saved(await api("/api/config", {values, pairs: S.cfgPairs}), t("Settings saved")); await refresh(); await ENTER.settings(); } catch (e) { fail(e); }
 };
-ACT.saveRaw = async () => { try { saved(await api("/api/config/raw", {text: $("#raw").value}), "File saved"); await refresh(); await ENTER.settings(); } catch (e) { fail(e); } };
+ACT.saveRaw = async () => { try { saved(await api("/api/config/raw", {text: $("#raw").value}), t("File saved")); await refresh(); await ENTER.settings(); } catch (e) { fail(e); } };
 ACT.saveToken = async () => {
   const body = {account_id: $("#acc").value.trim()};
   if ($("#tok").value.trim()) body.token = $("#tok").value.trim();
-  if (!body.token && !body.account_id) return toast("Enter a token or an account ID", true);
+  if (!body.token && !body.account_id) return toast(t("Enter a token or an account ID"), true);
   if (!body.account_id) delete body.account_id;
-  try { await api("/api/token", body); toast("Saved"); await refresh(); render(); } catch (e) { fail(e); }
+  try { await api("/api/token", body); toast(t("Saved")); await refresh(); render(); } catch (e) { fail(e); }
 };
-ACT.clearToken = async () => { try { await api("/api/token", {clear: true}); toast("Token removed"); S.accounts = null; await refresh(); render(); } catch (e) { fail(e); } };
-ACT.testToken = async el => { try { S.accounts = (await api("/api/token/test", {sandbox: !!el.dataset.sandbox})).accounts; toast("Connection works"); render(); } catch (e) { fail(e); } };
-ACT.useAccount = async el => { try { await api("/api/token", {account_id: el.dataset.v}); toast("Account selected"); await refresh(); } catch (e) { fail(e); } };
+ACT.clearToken = async () => { try { await api("/api/token", {clear: true}); toast(t("Token removed")); S.accounts = null; await refresh(); render(); } catch (e) { fail(e); } };
+ACT.testToken = async el => { try { S.accounts = (await api("/api/token/test", {sandbox: !!el.dataset.sandbox})).accounts; toast(t("Connection works")); render(); } catch (e) { fail(e); } };
+ACT.useAccount = async el => { try { await api("/api/token", {account_id: el.dataset.v}); toast(t("Account selected")); await refresh(); } catch (e) { fail(e); } };
 
 /* ---------- logs ---------- */
-VIEWS.logs = () => `<div class="head"><h1>Logs</h1><span class="sub">logs/bot.log · refreshes automatically</span></div><div class="log" id="logbox"></div>`;
+VIEWS.logs = () => `<div class="head"><h1>${t("Logs")}</h1><span class="sub">logs/bot.log · ${t("refreshes automatically")}</span></div><div class="log" id="logbox"></div>`;
 function drawLog() {
   const el = $("#logbox"); if (!el) return;
   const stick = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
-  el.textContent = S.log.length ? S.log.join("\n") : "Nothing logged yet. The log fills when paper, sandbox or live trading runs.";
+  el.textContent = S.log.length ? S.log.join("\n") : t("Nothing logged yet. The log fills when paper, sandbox or live trading runs.");
   if (stick) el.scrollTop = el.scrollHeight;
 }
 AFTER.logs = () => { drawLog(); const el = $("#logbox"); if (el) el.scrollTop = el.scrollHeight; };
@@ -538,7 +801,7 @@ let resizeTimer;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => (AFTER[S.page] || (() => {}))(), 150); });
 window.addEventListener("hashchange", route);
 if (TOKEN.startsWith("__")) {
-  document.body.insertAdjacentHTML("beforeend", `<div class="cover"><div><h1 style="font-size:20px">Start the interface with <code>ui.bat</code></h1><p class="muted">This page talks to the bot running on your computer, so it has to be opened by the bot.<br>Double-click <code>ui.bat</code> in the bot folder, or run <code>.\\run.bat ui</code>.</p></div></div>`);
+  document.body.insertAdjacentHTML("beforeend", `<div class="cover"><div><h1 style="font-size:20px">${t("Start the interface with")} <code>ui.bat</code></h1><p class="muted">${t("This page talks to the bot running on your computer, so it has to be opened by the bot.")}<br>${t("Double-click {0} in the bot folder, or run {1}.", "<code>ui.bat</code>", "<code>.\\run.bat ui</code>")}</p></div></div>`);
 } else {
   route();
   refresh();

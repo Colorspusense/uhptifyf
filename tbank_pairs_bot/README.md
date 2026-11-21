@@ -10,12 +10,13 @@ This is software, not investment advice. Profit is not guaranteed; run it in sim
 ## Quick start (Windows)
 
 Double-click `ui.bat`. It installs the dependencies on the first run, starts the bot's local
-interface and opens it in your browser at http://127.0.0.1:8765. Keep its window open while you work;
+interface and opens it in your browser (normally http://127.0.0.1:8791; the address is printed in its window). Keep its window open while you work;
 close it (or press Ctrl+C) to stop.
 
 The interface covers everything: start and stop paper / sandbox / live trading, positions and risk
 state, the scanner with Z-score charts, backtest and walk-forward, the trade journal, all settings
-and the T-Bank token. It is served only to this computer. `ui.html` cannot be opened directly as a
+and the T-Bank token. Switch between English and Russian with the EN / RU buttons in the bottom-left
+corner (Russian guide: [README.ru.md](README.ru.md)). It is served only to this computer. `ui.html` cannot be opened directly as a
 file, because a web page on its own cannot run the bot.
 
 ## Command line

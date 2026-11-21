@@ -151,7 +151,7 @@ def main() -> None:
     p.set_defaults(fn=cmd_status)
 
     p = sub.add_parser("ui", help="open the web interface in your browser")
-    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--port", type=int, default=8791)
     p.add_argument("--no-browser", action="store_true")
 
     args = ap.parse_args()

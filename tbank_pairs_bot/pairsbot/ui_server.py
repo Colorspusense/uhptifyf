@@ -451,14 +451,24 @@ class Handler(BaseHTTPRequestHandler):
         self._api("POST", body)
 
 
-def serve(config_path: str | None, port: int = 8765, open_browser: bool = True) -> None:
+class _Server(ThreadingHTTPServer):
+    # Windows lets a second program bind a port that is already in use unless this is off.
+    allow_reuse_address = False
+
+
+def serve(config_path: str | None, port: int = 8791, open_browser: bool = True) -> None:
     Handler.app = app = App(config_path)
+    httpd = None
+    for candidate in range(port, port + 20):  # another program may already use the port: take the next one
+        try:
+            httpd = _Server(("127.0.0.1", candidate), Handler)
+            break
+        except OSError:
+            continue
+    if httpd is None:
+        raise SystemExit(f"No free port between {port} and {port + 19}; start with --port <number>.")
+    port = candidate
     Handler.hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
-    try:
-        httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    except OSError:
-        raise SystemExit(f"Port {port} is busy. The interface may already be open at http://127.0.0.1:{port} "
-                         f"- otherwise start with --port <number>.") from None
     url = f"http://127.0.0.1:{port}"
     print(f"Interface: {url}\nKeep this window open while you use it. Press Ctrl+C to stop.")
     if open_browser:
