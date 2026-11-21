@@ -62,17 +62,23 @@ class PaperExecutor:
     def resolve_buy(self, inst: dict, key: str, ref: float = 0.0) -> tuple | None:
         return None  # a simulated buy is recorded in the same step, nothing can be left open
 
-    def check_sell(self, key: str, ref: float, shares: float) -> tuple:
-        return ("gone",)  # a simulated sell is booked in the same step
+    def check_sell(self, inst: dict, key: str, ref: float) -> tuple:
+        return ("done", 0, 0.0, 0.0)  # a simulated sell is booked in the same step
 
     def sell(self, pos: dict, inst: dict, price: float, key: str) -> tuple:
         price *= 1 - self.cfg.costs.slippage
         fee = pos["qty"] * price * self.cfg.costs.commission
         self.state["cash"] += pos["qty"] * price - fee
-        return price, fee
+        return pos["qty"], price, fee
 
     def place_stop(self, pos: dict, inst: dict) -> str:
         return ""
+
+    def cancel_stop(self, pos: dict) -> None:
+        pass
+
+    def stop_active(self, pos: dict) -> bool | None:
+        return None
 
 
 class TBankExecutor:
@@ -136,51 +142,84 @@ class TBankExecutor:
                 return None
             raise
 
-    def check_sell(self, key: str, ref: float, shares: float) -> tuple:
-        """State of a sell sent earlier: ("filled", price, fee), ("open",) or ("gone",)."""
+    def check_sell(self, inst: dict, key: str, ref: float) -> tuple:
+        """What became of a sell sent earlier: ("open",) or ("done", shares_sold, price, fee)."""
         from .tbank import TBankError
 
         try:
             s = self._wait(key, 30, True)
         except TBankError as e:
             if e.not_found:  # it never reached the broker
-                return ("gone",)
+                return ("done", 0, 0.0, 0.0)
             raise
-        if s["status"].endswith("_FILL"):
-            return ("filled", self._fill_price(s, ref, shares), s["commission"])
-        return ("gone",) if s["status"].endswith(_DONE) else ("open",)
+        if not s["status"].endswith(_DONE):
+            return ("open",)
+        shares = s["lots"] * inst["lot"]
+        return ("done", shares, self._fill_price(s, ref, shares) if shares else 0.0, s["commission"])
 
-    def sell(self, pos: dict, inst: dict, price: float, key: str) -> tuple:
+    def cancel_stop(self, pos: dict) -> None:
+        """Cancel the broker stop. Only "the broker no longer has it" counts as done; other errors are raised."""
+        from .tbank import TBankError
+
         if pos.get("stop_order_id"):
             try:
                 self.client.cancel_stop(self.account_id, pos["stop_order_id"])
-            except Exception as e:
-                log.warning("cancel of stop order failed (probably already executed): %s", e)
+            except TBankError as e:
+                if not e.not_found:
+                    raise
             pos["stop_order_id"] = ""
-        # Never sell more than is actually held: the broker stop may already have closed the position.
+            pos["stop_key"] = str(uuid.uuid4())  # a cancelled order's key cannot be used for a new one
+
+    def sell(self, pos: dict, inst: dict, price: float, key: str) -> tuple:
+        """Market sell of the whole position: (shares_sold, price, fee). Sells only what is really held."""
+        from .tbank import TBankError
+
+        self.cancel_stop(pos)
         held = self.client.portfolio(self.account_id)["positions"].get(inst["uid"], 0.0)
         lots = int(min(held, pos["qty"]) // inst["lot"])
         if lots <= 0:
-            return pos["stop"], pos["qty"] * pos["stop"] * self.cfg.costs.commission
+            return 0, 0.0, 0.0  # nothing to sell; the engine decides what that means
+        state, settled = None, False  # settled = it is certain that no sell order is still working
         try:
-            order_id = self.client.post_order(self.account_id, inst["uid"], lots, False, None, key)
-            s = self._wait(order_id, 60)
-            if s["lots"] < lots:
-                raise RuntimeError(f"sell of {pos['ticker']} not confirmed (status {s['status']}); check the terminal")
-        except Exception:
-            # The broker stop was cancelled above: put it back so the position is not left unprotected.
-            pos["stop_order_id"] = self.place_stop(pos, inst)
+            self.client.post_order(self.account_id, inst["uid"], lots, False, None, key)
+            state = self._wait(key, 60, True)
+            if not state["status"].endswith(_DONE):  # a market order that hangs: take it back
+                self.client.cancel_order(self.account_id, state["order_id"])
+                state = self._wait(key, 15, True)
+            settled = state["status"].endswith(_DONE)
+            if not settled:
+                raise RuntimeError(f"sell of {pos['ticker']} is stuck (status {state['status']}); check the terminal")
+        except TBankError as e:
+            settled = e.not_found
             raise
-        return self._fill_price(s, price, lots * inst["lot"]), s["commission"]
+        finally:
+            sold = state["lots"] * inst["lot"] if settled and state else 0
+            if settled and sold < pos["qty"]:
+                # Shares remain and no sell order is working: protect them again before anything else.
+                rest = dict(pos, qty=pos["qty"] - sold, stop_key=str(uuid.uuid4()))
+                pos["stop_order_id"], pos["stop_key"] = self.place_stop(rest, inst), rest["stop_key"]
+        return sold, self._fill_price(state, price, sold) if sold else 0.0, state["commission"]
 
     def place_stop(self, pos: dict, inst: dict) -> str:
-        if not self.cfg.live.place_broker_stop:
+        if not self.cfg.live.place_broker_stop or pos["qty"] < inst["lot"]:
             return ""
         try:
-            return self.client.post_stop_loss(self.account_id, inst["uid"], pos["qty"] // inst["lot"], pos["stop"])
+            # The same key on every retry: a lost answer can never leave two stop orders behind.
+            return self.client.post_stop_loss(self.account_id, inst["uid"], int(pos["qty"] // inst["lot"]),
+                                              pos["stop"], pos["stop_key"])
         except Exception as e:
             log.warning("broker stop for %s not placed, the bot will watch the stop itself: %s", pos["ticker"], e)
             return ""
+
+    def stop_active(self, pos: dict) -> bool | None:
+        """Is this position's stop order still waiting at the broker? None when that cannot be told."""
+        if not pos.get("stop_order_id"):
+            return False
+        try:
+            return pos["stop_order_id"] in self.client.active_stops(self.account_id)
+        except Exception as e:
+            log.warning("stop orders could not be listed: %s", e)
+            return None
 
 
 def in_session(cfg, now: datetime) -> bool:
@@ -196,6 +235,9 @@ class Engine:
         self.state = {"positions": [], "risk": {}, "passport_day": "", "last_exit": {}, "pending": None}
         if self.state_path.exists():
             self.state.update(json.loads(self.state_path.read_text(encoding="utf-8")))
+        for pos in self.state["positions"]:  # written by an earlier version
+            pos.setdefault("stop_key", str(uuid.uuid4()))
+            pos.setdefault("stop_order_id", "")
         known = RiskState.__dataclass_fields__
         self.risk = RiskState(**{k: v for k, v in self.state["risk"].items() if k in known})
         self.exec = executor_factory(self.state) if executor_factory else None
@@ -218,7 +260,7 @@ class Engine:
 
     # ---- data ------------------------------------------------------------------------
     def _closes(self, today: date) -> tuple:
-        start = today - timedelta(days=620)
+        start = today - timedelta(days=1100)  # ~750 sessions: enough for EMA200 of the index to settle
         tickers = self.cfg.tickers
         last = self.p.last_prices(tickers)
         closes = {}
@@ -276,9 +318,16 @@ class Engine:
         positions = self.state["positions"]
 
         if trade:
-            self._recover_pending(today)
+            try:
+                self._recover_pending(today)
+            except Exception as e:
+                log.error("unsettled buy of %s could not be checked (%s): no new entries until it is",
+                          self.state["pending"]["ticker"], e)
+                entries = False
             holdings = self.exec.holdings()
-            requested = self._close_requests()
+            requested = self._close_requests() & {p["ticker"] for p in positions}
+            for stale in self._close_requests() - requested:  # a request for a stock that is not held
+                self._drop_close_request(stale)
             for pos in positions[:]:
                 self._manage(pos, closes, last, today, holdings, requested)
             equity, cash = self.exec.account(last)
@@ -376,11 +425,15 @@ class Engine:
 
         if holdings is not None and holdings.get(inst["uid"], 0.0) < inst["lot"]:
             # The shares are gone from the account: the broker stop fired, or they were sold by hand.
-            # Require two cycles in a row so that one bad portfolio answer cannot erase a position.
+            # One odd portfolio answer must not erase a position, so this has to repeat; and while the
+            # stop order is still waiting at the broker it cannot have fired, so wait much longer.
             pos["missing"] = pos.get("missing", 0) + 1
-            if pos["missing"] < 2:
+            waiting = self.exec.stop_active(pos)
+            if pos["missing"] < (2 if waiting is False else 10):
                 return self.save()
-            reason = "stop" if pos.get("stop_order_id") else "external"
+            had_stop = bool(pos.get("stop_order_id"))
+            self.exec.cancel_stop(pos)
+            reason = "stop" if had_stop and not waiting else "external"
             exit_price = pos["stop"] if reason == "stop" else (price or pos["entry_price"])
             fee = pos["qty"] * exit_price * self.cfg.costs.commission  # the real fill is not known here
             return self._book(pos, exit_price, fee, reason, snap, today)
@@ -417,33 +470,63 @@ class Engine:
 
     def _close(self, pos, inst, price, reason, snap, today, key, retry) -> None:
         if retry:  # an earlier attempt may already have sold: look that order up before selling again
-            outcome = self.exec.check_sell(key, price, pos["qty"])
-            if outcome[0] == "filled":
-                return self._book(pos, outcome[1] or price, outcome[2], reason, snap, today)
-            if outcome[0] == "gone":  # rejected, cancelled or never sent: a fresh order is needed
-                key = pos["closing"]["key"] = str(uuid.uuid4())
+            outcome = self.exec.check_sell(inst, key, price)
+            if outcome[0] == "done":
+                if outcome[1] and self._sold(pos, inst, outcome[1], outcome[2] or price, outcome[3], reason, snap, today):
+                    return
+                key = pos["closing"]["key"] = str(uuid.uuid4())  # that order is finished: a fresh one is needed
                 self.save()
         try:
-            exit_price, fee = self.exec.sell(pos, inst, price, key)
-        except Exception:
-            self.save()  # keeps the id of a re-placed broker stop
-            raise
-        self._book(pos, exit_price, fee, reason, snap, today)
+            shares, exit_price, fee = self.exec.sell(pos, inst, price, key)
+        finally:
+            self.save()  # keeps what the attempt changed: the stop order id, a re-placed stop
+        if shares <= 0:
+            # Nothing was sold because the account shows no shares. Do not close the books on one reading:
+            # drop the sell and let the next cycles decide (shares are back, or really gone).
+            log.warning("%s: no shares on the account when selling (%s); will re-check", pos["ticker"], reason)
+            pos.pop("closing", None)
+            return self.save()
+        if not self._sold(pos, inst, shares, exit_price or price, fee, reason, snap, today):
+            pos.pop("closing", None)  # part of the position remains: it is sold on the next cycle
+            self.save()
+
+    def _sold(self, pos, inst, shares, exit_price, fee, reason, snap, today) -> bool:
+        """Record a sale. True when the whole position is closed, False when a part of it remains."""
+        if shares >= pos["qty"]:
+            self.exec.cancel_stop(pos)
+            self._book(pos, exit_price, fee, reason, snap, today)
+            return True
+        part = shares / pos["qty"]
+        entry_fee = pos.get("entry_fee", 0.0) * part
+        pnl = shares * (exit_price - pos["entry_price"]) - fee - entry_fee
+        pos["qty"] -= shares
+        pos["entry_fee"] = pos.get("entry_fee", 0.0) - entry_fee
+        pos["realised"] = pos.get("realised", 0.0) + pnl
+        if not pos.get("stop_order_id"):
+            pos["stop_key"] = str(uuid.uuid4())  # the remaining shares need a stop order of their own
+        self.save()
+        self._journal_trade(pos, shares, exit_price, reason, snap, today, pnl)
+        log.warning("PARTLY CLOSED %s: sold %s at %.4f (%s), %s left", pos["ticker"], shares, exit_price, reason,
+                    pos["qty"])
+        return False
 
     def _book(self, pos, exit_price, fee, reason, snap, today) -> None:
         pnl = pos["qty"] * (exit_price - pos["entry_price"]) - fee - pos.get("entry_fee", 0.0)
         self.state["positions"].remove(pos)
         self.state["last_exit"] = {pos["ticker"]: today.isoformat(),
                                    **{k: v for k, v in self.state["last_exit"].items() if v == today.isoformat()}}
-        self.risk.trade_closed(pnl, today, self.cfg.risk)
+        self.risk.trade_closed(pnl + pos.get("realised", 0.0), today, self.cfg.risk)
         self.save()
         self._drop_close_request(pos["ticker"])
+        self._journal_trade(pos, pos["qty"], exit_price, reason, snap, today, pnl)
+        log.info("CLOSED %s x%s at %.4f (%s), PnL %.2f RUB", pos["ticker"], pos["qty"], exit_price, reason, pnl)
+
+    def _journal_trade(self, pos, qty, exit_price, reason, snap, today, pnl) -> None:
         self._journal("trades.csv", {
             "mode": self.mode, "pair": pos["pair"], "bought": pos["ticker"], "entry_date": pos["entry_date"],
-            "exit_date": today.isoformat(), "qty": pos["qty"], "entry_price": pos["entry_price"],
+            "exit_date": today.isoformat(), "qty": qty, "entry_price": pos["entry_price"],
             "exit_price": round(exit_price, 4), "stop": pos["stop"], "z_entry": pos["z_entry"],
             "z_exit": round(snap.z, 2) if snap else "", "tqs": pos["tqs"], "reason": reason, "pnl": round(pnl, 2)})
-        log.info("CLOSED %s x%s at %.4f (%s), PnL %.2f RUB", pos["ticker"], pos["qty"], exit_price, reason, pnl)
 
     # ---- entries ---------------------------------------------------------------------
     def _recover_pending(self, today: date) -> None:
@@ -474,7 +557,8 @@ class Engine:
         ask = book[1] if book else last.get(buy)
         if not ask:
             return False
-        limit = round(round(ask / inst["step"]) * inst["step"], 9)  # limit order at the current offer
+        # Limit order at the current offer, on the price grid and never below the offer.
+        limit = round(math.ceil(ask / inst["step"] - 1e-9) * inst["step"], 9)
         shares = position_shares(equity, cash / (1 + self.cfg.costs.commission), limit, inst["lot"], rk, factor)
         if shares <= 0:
             row["verdict"] = "signal skipped: not enough cash for one lot"
@@ -504,7 +588,8 @@ class Engine:
                "entry_price": price, "entry_fee": fee, "entry_date": pending["date"],
                "stop": round(math.floor(price * (1 - rk.stop_pct) / step + 1e-9) * step, 9),
                "target": round(price * (1 + rk.take_profit_pct), 4) if rk.take_profit_pct > 0 else None,
-               "z_entry": pending["z_entry"], "tqs": pending["tqs"], "stop_order_id": ""}
+               "z_entry": pending["z_entry"], "tqs": pending["tqs"], "stop_order_id": "",
+               "stop_key": str(uuid.uuid4())}
         self.state["positions"].append(pos)
         self.state["pending"] = None
         self.save()  # record the position before anything else can fail
@@ -539,22 +624,30 @@ def lock_is_fresh(path: Path) -> bool:
 
 
 class _Lock:
-    """One trading process per mode: a file whose modification time is refreshed while the process lives."""
+    """One trading process per mode. The operating system holds the lock, so it cannot be taken twice and
+    is released even if the process dies; the file's modification time tells the interface it is alive."""
 
     def __init__(self, path: Path):
-        self.path, self._stop = path, threading.Event()
+        self.path, self._stop, self._file = path, threading.Event(), None
 
     def __enter__(self):
-        busy = SystemExit(f"{self.path.stem} trading is already running in another window")
-        if lock_is_fresh(self.path):
-            raise busy
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.unlink(missing_ok=True)  # left over from a process that was killed
+        f = open(self.path, "a+")
         try:
-            with open(self.path, "x", encoding="utf-8") as f:  # only one of two racing starters gets it
-                f.write(str(os.getpid()))
-        except FileExistsError:
-            raise busy from None
+            f.seek(0)
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            f.close()
+            raise SystemExit(f"{self.path.stem} trading is already running in another window") from None
+        self._file = f
+        os.utime(self.path)
         threading.Thread(target=self._beat, daemon=True).start()
         return self
 
@@ -567,7 +660,11 @@ class _Lock:
 
     def __exit__(self, *exc) -> None:
         self._stop.set()
-        self.path.unlink(missing_ok=True)
+        try:
+            os.utime(self.path, (0, 0))  # "not running" for the interface; the file itself stays
+        except OSError:
+            pass
+        self._file.close()  # closing releases the lock
 
 
 def _mtime(path: Path) -> float:

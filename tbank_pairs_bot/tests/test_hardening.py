@@ -85,7 +85,9 @@ def test_only_one_process_per_mode(tmp_path):
         assert lock_is_fresh(path)
         with pytest.raises(SystemExit):
             _Lock(path).__enter__()
-    assert not path.exists()
+    assert not lock_is_fresh(path)  # released: a new start is allowed
+    with _Lock(path):
+        pass
     winners, errors = [], []
 
     def starter():

@@ -236,3 +236,114 @@ def test_sandbox_account_is_opened_and_funded(env, monkeypatch):
     monkeypatch.setenv("TBANK_ACCOUNT_ID", "someone-else")
     with pytest.raises(SystemExit):
         bot._engine(cfg, "live")
+
+
+def test_empty_portfolio_answer_while_selling_does_not_erase_the_position(env):
+    cfg, fake, engine = env
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    (pos,) = eng.state["positions"]
+    uid, shares = "uid-" + pos["ticker"], pos["qty"]
+    cfg.stats.exit_z = -99.0
+    real = fake.m_GetPortfolio
+    answers = iter([real, lambda b: {**real(b), "positions": []}])  # cycle start: fine; inside sell: empty
+    fake.m_GetPortfolio = lambda b: next(answers, real)(b)
+    eng.cycle(ignore_session=True)
+    assert len(eng.state["positions"]) == 1 and fake.positions[uid] == shares and not trades(cfg)
+    cfg.stats.exit_z = 99.0
+    eng = engine()
+    eng.cycle(ignore_session=True)  # the shares are still there: the stop is put back
+    assert sum(s["active"] for s in fake.stops.values()) == 1 and eng.state["positions"][0]["stop_order_id"]
+
+
+def test_stop_that_cannot_be_cancelled_blocks_the_sell(env):
+    from fake_tbank import ApiFault
+
+    cfg, fake, engine = env
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    (pos,) = eng.state["positions"]
+    cfg.stats.exit_z = -99.0
+    fake.fault["CancelStopOrder"] = [ApiFault(400, 3, 30099, "temporary refusal")]
+    with pytest.raises(TBankError):
+        eng.cycle(ignore_session=True)
+    # Still protected and still recorded: the stop was not forgotten, nothing was sold.
+    assert eng.state["positions"][0]["stop_order_id"] and sum(s["active"] for s in fake.stops.values()) == 1
+    assert fake.positions["uid-" + pos["ticker"]] == pos["qty"]
+    engine().cycle(ignore_session=True)
+    assert fake.positions["uid-" + pos["ticker"]] == 0 and not any(s["active"] for s in fake.stops.values())
+    assert len(trades(cfg)) == 1
+
+
+def test_partial_sell_keeps_the_rest_tracked_and_protected(env):
+    cfg, fake, engine = env
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    (pos,) = eng.state["positions"]
+    uid, qty = "uid-" + pos["ticker"], pos["qty"]
+    cfg.stats.exit_z = -99.0
+    fake.sell_fill = 3  # only 3 lots of the market order are executed
+    eng.cycle(ignore_session=True)
+    (pos,) = eng.state["positions"]
+    assert pos["qty"] == qty - 30 == fake.positions[uid] and "closing" not in pos
+    active = [s for s in fake.stops.values() if s["active"]]
+    assert len(active) == 1 and active[0]["lots"] == pos["qty"] // 10  # a stop for exactly what is left
+    fake.sell_fill = None
+    engine().cycle(ignore_session=True)
+    rows = trades(cfg)
+    assert fake.positions[uid] == 0 and [float(r["qty"]) for r in rows] == [30, qty - 30]
+    assert not any(s["active"] for s in fake.stops.values())
+    assert fake.cash == pytest.approx(1_000_000 + sum(float(r["pnl"]) for r in rows), abs=1.0)
+
+
+def test_lost_answer_to_a_stop_order_never_leaves_two_stops(env):
+    cfg, fake, engine = env
+    fake.drop["PostStopOrder"] = 5  # the broker registers the stop but the bot never hears back
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    assert eng.state["positions"][0]["stop_order_id"] == "" and len(fake.stops) == 1
+    engine().cycle(ignore_session=True)  # retry with the same key
+    assert len(fake.stops) == 1 and eng.state["positions"] and engine().state["positions"][0]["stop_order_id"]
+
+
+def test_shares_missing_while_the_stop_still_waits_are_not_booked_quickly(env):
+    cfg, fake, engine = env
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    real = fake.m_GetPortfolio
+    fake.m_GetPortfolio = lambda b: {**real(b), "positions": []}  # the broker keeps answering "no shares"
+    for _ in range(4):
+        eng.cycle(ignore_session=True)
+    assert len(eng.state["positions"]) == 1 and not trades(cfg)  # its stop order is still active: wait
+    fake.m_GetPortfolio = real
+    eng.cycle(ignore_session=True)
+    assert "missing" not in eng.state["positions"][0]
+
+
+def test_unsettled_buy_does_not_block_exits(env):
+    from fake_tbank import ApiFault
+
+    cfg, fake, engine = env
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    (pos,) = eng.state["positions"]
+    eng.state["pending"] = {"key": "k-unknown", "ticker": pos["other"], "other": pos["ticker"], "sector": "banks",
+                            "limit": 100.0, "z_entry": -2.1, "tqs": 85, "date": live.now_msk().date().isoformat()}
+    eng.save()
+    fake.fault["GetOrderState"] = [ApiFault(500, 13, 70001, "internal error")] * 5
+    cfg.stats.exit_z = -99.0
+    eng = engine()
+    eng.cycle(ignore_session=True)
+    assert eng.state["positions"] == [] and eng.state["pending"]  # the exit happened, the buy is still open
+    assert len(fake.orders) == 2
+
+
+def test_stale_close_request_is_dropped(env):
+    cfg, fake, engine = env
+    request = cfg.root / "state" / "sandbox.close"
+    request.parent.mkdir(exist_ok=True)
+    request.write_text('["SBER", "VTBR"]', encoding="utf-8")
+    eng = engine()
+    eng.cycle(ignore_session=True)  # opens a position; the old request must not close it
+    eng.cycle(ignore_session=True)
+    assert len(eng.state["positions"]) == 1 and not request.exists() and not trades(cfg)

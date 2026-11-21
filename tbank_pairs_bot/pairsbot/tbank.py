@@ -188,12 +188,18 @@ class TBankClient:
     def cancel_order(self, account_id: str, order_id: str) -> None:
         self.call("OrdersService", "CancelOrder", {"accountId": account_id, "orderId": order_id})
 
-    def post_stop_loss(self, account_id: str, uid: str, lots: int, stop_price: float) -> str:
+    def post_stop_loss(self, account_id: str, uid: str, lots: int, stop_price: float, key: str | None = None) -> str:
+        """key is the idempotency key: repeating the call with it does not create a second stop order."""
         return self.call("StopOrdersService", "PostStopOrder", {
             "instrumentId": uid, "quantity": str(lots), "stopPrice": f2q(stop_price), "accountId": account_id,
             "direction": "STOP_ORDER_DIRECTION_SELL", "stopOrderType": "STOP_ORDER_TYPE_STOP_LOSS",
-            "orderId": str(uuid.uuid4()),
+            "orderId": key or str(uuid.uuid4()),
             "expirationType": "STOP_ORDER_EXPIRATION_TYPE_GOOD_TILL_CANCEL"})["stopOrderId"]
+
+    def active_stops(self, account_id: str) -> set:
+        found = self.call("StopOrdersService", "GetStopOrders",
+                          {"accountId": account_id, "status": "STOP_ORDER_STATUS_ACTIVE"})
+        return {o["stopOrderId"] for o in found.get("stopOrders", [])}
 
     def cancel_stop(self, account_id: str, stop_id: str) -> None:
         self.call("StopOrdersService", "CancelStopOrder", {"accountId": account_id, "stopOrderId": stop_id})

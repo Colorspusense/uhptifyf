@@ -104,7 +104,9 @@ class FakeTBank:
         self.index = cfg.general.index_ticker
         self.lots = lots or {}
         self.cash, self.positions = cash, {}        # positions: uid -> shares
-        self.orders, self.by_request, self.stops = {}, {}, {}
+        self.orders, self.by_request, self.stops, self.stop_keys = {}, {}, {}, {}
+        self.fault = {}                             # method -> ApiFault to raise (once per entry in a list)
+        self.sell_fill = None                       # None = whole order, or a number of lots to sell
         self.price = {}                             # ticker -> overridden last price
         self.fill = "fill"                          # fill | none | partial | reject
         self.drop = {}                              # method -> number of responses to lose
@@ -127,6 +129,8 @@ class FakeTBank:
                     try:
                         if self.headers.get("Authorization") != "Bearer good-token":
                             raise ApiFault(401, 16, 40003, "Authentication token is missing or invalid")
+                        if fake.fault.get(method):
+                            raise fake.fault[method].pop(0)
                         out, status = getattr(fake, "m_" + method)(body), 200
                         fake.spec.check(path, body, out)
                     except ApiFault as e:
@@ -325,9 +329,11 @@ class FakeTBank:
             if lots * lot > self.positions.get(o["uid"], 0):
                 o["status"] = "EXECUTION_REPORT_STATUS_REJECTED"  # no short selling
             elif self.fill != "none":
-                self.positions[o["uid"]] -= lots * lot
-                self.cash += lots * lot * last * (1 - COMMISSION)
-                o["done"], o["status"] = lots, "EXECUTION_REPORT_STATUS_FILL"
+                done = lots if self.sell_fill is None else min(self.sell_fill, lots)
+                self.positions[o["uid"]] -= done * lot
+                self.cash += done * lot * last * (1 - COMMISSION)
+                o["done"] = done
+                o["status"] = "EXECUTION_REPORT_STATUS_FILL" if done == lots else "EXECUTION_REPORT_STATUS_PARTIALLYFILL"
         return self._post_view(o)
 
     def _post_view(self, o: dict) -> dict:
@@ -357,10 +363,21 @@ class FakeTBank:
         t = self.ticker(b["instrumentId"])
         if int(b["quantity"]) * self.lot(t) > self.positions.get(b["instrumentId"], 0):
             raise ApiFault(400, 3, 30042, "not enough assets for the stop order")
+        if b["orderId"] in self.stop_keys:  # idempotency
+            return {"stopOrderId": self.stop_keys[b["orderId"]]}
         sid = str(uuid.uuid4())
+        self.stop_keys[b["orderId"]] = sid
         self.stops[sid] = {"uid": b["instrumentId"], "lots": int(b["quantity"]), "stop": qf(b["stopPrice"]),
                            "active": True}
         return {"stopOrderId": sid}
+
+    def m_GetStopOrders(self, b):
+        if b.get("status") != "STOP_ORDER_STATUS_ACTIVE":
+            raise ApiFault(400, 3, 30052, "this imitation lists active stop orders only")
+        return {"stopOrders": [{"stopOrderId": sid, "lotsRequested": str(x["lots"]), "instrumentUid": x["uid"],
+                                "direction": "STOP_ORDER_DIRECTION_SELL", "stopPrice": money(x["stop"]),
+                                "orderType": "STOP_ORDER_TYPE_STOP_LOSS", "status": "STOP_ORDER_STATUS_ACTIVE"}
+                               for sid, x in self.stops.items() if x["active"]]}
 
     def m_CancelStopOrder(self, b):
         s = self.stops.get(b["stopOrderId"])

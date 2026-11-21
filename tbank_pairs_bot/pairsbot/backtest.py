@@ -89,6 +89,13 @@ def _metrics(trades: pd.DataFrame, equity: pd.Series, capital: float) -> dict:
     return m
 
 
+def daily_entry_points(df: pd.DataFrame, d, snap) -> int:
+    """Stand-in for the 15-minute entry screen (0-5 TQS points) when only daily bars are available."""
+    i = df.index.get_loc(d)
+    return int(2 * (snap.z > snap.z_prev) + 2 * (df.close.iloc[i] > df.close.iloc[i - 1])
+               + 1 * (df.volume.iloc[i] > df.volume.iloc[i - 1]))
+
+
 def simulate(cfg, hist: History, pre: dict, start=None, end=None) -> Result:
     st, rk, cost = cfg.stats, cfg.risk, cfg.costs
     capital = cfg.general.capital
@@ -171,11 +178,7 @@ def simulate(cfg, hist: History, pre: dict, start=None, end=None) -> Result:
             snap = table.get(d)
             if snap is None or buy in held or buy not in bars or statistical_screen(snap, st):
                 continue
-            df = hist.bars[buy]
-            i = df.index.get_loc(d)
-            pts = 2 * (snap.z > snap.z_prev) + 2 * (df.close.iloc[i] > df.close.iloc[i - 1]) \
-                + 1 * (df.volume.iloc[i] > df.volume.iloc[i - 1])
-            score = tqs_score(snap, mstate, pts, st)
+            score = tqs_score(snap, mstate, daily_entry_points(hist.bars[buy], d, snap), st)
             factor = size_factor(score, cfg.tqs)
             if factor > 0:
                 candidates.append({"key": key, "ticker": buy, "other": other, "sector": sector,
