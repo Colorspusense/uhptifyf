@@ -218,7 +218,7 @@ class Engine:
 
     # ---- data ------------------------------------------------------------------------
     def _closes(self, today: date) -> tuple:
-        start = today - timedelta(days=620)
+        start = today - timedelta(days=1100)  # ~750 sessions: enough for EMA200 of the index to settle
         tickers = self.cfg.tickers
         last = self.p.last_prices(tickers)
         closes = {}
@@ -474,7 +474,8 @@ class Engine:
         ask = book[1] if book else last.get(buy)
         if not ask:
             return False
-        limit = round(round(ask / inst["step"]) * inst["step"], 9)  # limit order at the current offer
+        # Limit order at the current offer, on the price grid and never below the offer.
+        limit = round(math.ceil(ask / inst["step"] - 1e-9) * inst["step"], 9)
         shares = position_shares(equity, cash / (1 + self.cfg.costs.commission), limit, inst["lot"], rk, factor)
         if shares <= 0:
             row["verdict"] = "signal skipped: not enough cash for one lot"
