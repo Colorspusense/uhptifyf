@@ -9,13 +9,15 @@ This is software, not investment advice. Profit is not guaranteed; run it in sim
 
 ## Quick start (Windows)
 
+Open the folder in a terminal. The leading `.\` is required in PowerShell and also works in cmd.
+
 ```
-setup.bat                  one-time: creates .venv and installs the dependencies
-run.bat scan               today's statistics and signals for every pair, no orders
-run.bat backtest           simulation on daily history
-run.bat walkforward        walk-forward check of the main parameters
-run.bat paper              simulation on live quotes with a virtual account (Ctrl+C to stop)
-run.bat status             saved positions and risk state
+.\setup.bat                  one-time: creates .venv and installs the dependencies
+.\run.bat scan               today's statistics and signals for every pair, no orders
+.\run.bat backtest           simulation on daily history
+.\run.bat walkforward        walk-forward check of the main parameters
+.\run.bat paper              simulation on live quotes with a virtual account (Ctrl+C to stop)
+.\run.bat status             saved positions and risk state
 ```
 
 `scan`, `backtest`, `walkforward` and `paper` work without a token: they then read the public MOEX
@@ -31,8 +33,8 @@ ISS feed, whose intraday quotes are about 15 minutes late. Add `--source synthet
 3. With a token, market data comes from T-Bank in real time.
 
 ```
-run.bat sandbox                       orders in the T-Bank sandbox (test contour, no real money)
-run.bat live --confirm-real-money     REAL orders on your account
+.\run.bat sandbox                       orders in the T-Bank sandbox (test contour, no real money)
+.\run.bat live --confirm-real-money     REAL orders on your account
 ```
 
 Add `--once` to `paper`, `sandbox` or `live` to run a single cycle, e.g. from Task Scheduler.
@@ -66,7 +68,7 @@ T-Bank hosts use the Russian Trusted Root CA; it is shipped in `certs/` and trus
 
 Money management: position value = risk per trade / stop distance (0.5% risk by default), capped by
 cash; sector risk <= 2.5%; no new entries after a 2% daily loss; pause after a 5% weekly drawdown or
-three losses in a row (`run.bat status --reset-halt` clears the pause after your review).
+three losses in a row (`.\run.bat status --reset-halt` clears the pause after your review).
 
 Every closed trade goes to `journal/trades.csv`; daily pair statistics go to `journal/passports/`.
 
