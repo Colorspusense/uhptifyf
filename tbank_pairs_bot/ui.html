@@ -75,6 +75,9 @@ th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:10p
 td{padding:10px 14px;border-bottom:1px solid #1b1e23;white-space:nowrap}
 tr:last-child td{border-bottom:0}
 td.n,th.n{text-align:right}
+table.compact th,table.compact td{padding-left:9px;padding-right:9px}
+table.compact th:first-child,table.compact td:first-child{padding-left:20px}
+table.compact th:last-child,table.compact td:last-child{padding-right:20px}
 td.wrap{white-space:normal;color:var(--muted);min-width:260px}
 tbody tr.click{cursor:pointer}
 tbody tr.click:hover td{background:#ffffff05}
@@ -242,7 +245,7 @@ const RU = {
   "manual": "вручную", "external": "продано вне бота",
   "Stop-loss": "Стоп-лосс", "The bot was updated": "Бот обновлён",
   "Close the interface window and start ui.bat again to finish the update.": "Закройте окно интерфейса и снова запустите ui.bat, чтобы завершить обновление.",
-  "Pair search": "Поиск пар", "Search for pairs": "Найти пары", "Pair": "Пара", "Status": "Статус", "Signal days": "Дней с сигналом",
+  "Pair search": "Поиск пар", "Search for pairs": "Найти пары", "Pair": "Пара", "Status": "Статус", "Signal days": "Сигналы, дн.",
   "Days in the last year with Z at or below the entry level, both directions": "Сколько дней за последний год Z был не выше уровня входа, в обе стороны",
   "Downloading history for about 50 stocks and testing every same-sector pair. The first run takes a minute.": "Загружаем историю примерно по 50 акциям и проверяем каждую пару внутри сектора. Первый запуск занимает около минуты.",
   "Checks liquid Moscow Exchange stocks, sector by sector, for pairs that meet the correlation, cointegration and β conditions today. The guide asks for this review monthly.": "Проверяет ликвидные акции МосБиржи по секторам и находит пары, которые сегодня проходят условия по корреляции, коинтеграции и β. Руководство требует такой пересмотр раз в месяц.",
@@ -668,7 +671,7 @@ function finderCard() {
   else if (!f || !st) body = `<div class="empty">${t("Checks liquid Moscow Exchange stocks, sector by sector, for pairs that meet the correlation, cointegration and β conditions today. The guide asks for this review monthly.")}</div>`;
   else {
     const rows = f.rows.slice(0, S.findAll ? 500 : 15).map(r => `<tr>
-      <td><b>${esc(r.a)}</b> / <b>${esc(r.b)}</b></td><td class="muted">${esc(r.sector)}</td>
+      <td><b>${esc(r.a)}</b> / <b>${esc(r.b)}</b> <span class="dim">· ${esc(r.sector)}</span></td>
       <td class="n ${r.fails.includes("correlation") ? "bad" : ""}">${num(r.corr)}</td><td class="n ${r.fails.includes("rolling correlation") ? "bad" : ""}">${num(r.corr60)}</td>
       <td class="n ${r.fails.includes("cointegration") ? "bad" : ""}">${num(r.coint_p, 3)}</td><td class="n ${r.fails.includes("beta") ? "bad" : ""}">${num(r.beta_chg * 100, 0)}%</td>
       <td class="n">${r.half_life == null ? "∞" : num(r.half_life, 0)}</td><td class="n">${num(r.z_a)} / ${num(r.z_b)}</td><td class="n">${r.signal_days}</td>
@@ -676,7 +679,7 @@ function finderCard() {
       <td class="n">${r.configured ? `<span class="muted">${t("in your list")}</span>` : `<button class="btn small" data-act="addFound" data-a="${esc(r.a)}" data-b="${esc(r.b)}" data-sector="${esc(r.sector)}">${t("Add to list")}</button>`}</td></tr>`).join("");
     const ok = f.rows.filter(r => r.ok).length;
     body = `<div class="sub" style="padding:0 20px 10px">${t("{0} of {1} pairs pass today", ok, f.rows.length)} · ${t("{0} data", esc(srcName(f.source)))}${f.skipped.length ? " · " + t("no history: {0}", esc(f.skipped.join(", "))) : ""}</div>
-      <div class="tw"><table><thead><tr><th>${t("Pair")}</th><th>${t("Sector")}</th><th class="n">${t("Corr 120d")}</th><th class="n">${t("Corr 60d")}</th><th class="n">${t("Coint. p")}</th><th class="n">${t("β change")}</th><th class="n">${t("Half-life")}</th><th class="n">${t("Z-score")}</th><th class="n" title="${t("Days in the last year with Z at or below the entry level, both directions")}">${t("Signal days")}</th><th>${t("Status")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="tw"><table class="compact"><thead><tr><th>${t("Pair")}</th><th class="n">${t("Corr 120d")}</th><th class="n">${t("Corr 60d")}</th><th class="n">${t("Coint. p")}</th><th class="n">${t("β change")}</th><th class="n">${t("Half-life")}</th><th class="n">${t("Z-score")}</th><th class="n" title="${t("Days in the last year with Z at or below the entry level, both directions")}">${t("Signal days")}</th><th>${t("Status")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
       ${f.rows.length > 15 && !S.findAll ? `<div style="padding:10px 20px"><button class="btn link small" data-act="findAll">${t("Show all {0}", f.rows.length)}</button></div>` : ""}`;
   }
   return `<div class="card flush" style="margin-top:22px"><div class="row" style="padding:16px 20px 12px"><h2 class="grow" style="margin:0">${t("Pair search")}</h2><button class="btn" data-act="findPairs" ${S.findBusy ? "disabled" : ""}>${t("Search for pairs")}</button></div>${body}</div>`;
