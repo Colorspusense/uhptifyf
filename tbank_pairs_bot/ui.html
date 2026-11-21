@@ -230,6 +230,16 @@ const RU = {
   "Pair passports": "Паспорта пар", "Choose a pair…": "Выберите пару…",
   "Daily statistics of each pair, recorded while the bot trades.": "Ежедневная статистика каждой пары, которая записывается во время работы бота.",
   "Passports appear after the bot has run at least one trading cycle.": "Паспорта появятся после первого торгового цикла.",
+  "closing": "закрывается", "Close": "Закрыть", "Close {0}": "Закрыть {0}", "Close position": "Закрыть позицию",
+  "The whole position is sold at the market price and recorded in the journal as a manual exit.": "Вся позиция продаётся по рыночной цене и записывается в журнал как ручной выход.",
+  "The exchange session is closed, so the sale waits until trading is running during the session.": "Биржевая сессия закрыта, поэтому продажа произойдёт, когда торговля будет запущена во время сессии.",
+  "Closing {0}…": "Закрываем {0}…", "Close request saved": "Запрос на закрытие сохранён",
+  "No stop order at the broker: the bot watches this stop itself, only while it is running.": "Стоп-заявки у брокера нет: бот следит за этим стопом сам и только пока запущен.",
+  "A buy order for {0} is being checked": "Проверяется заявка на покупку {0}",
+  "Its result was not recorded. The bot settles it on the next cycle before opening anything new.": "Её результат не был записан. Бот разберётся с ней в следующем цикле, прежде чем открывать новые позиции.",
+  "Sandbox token": "Токен песочницы", "saved": "сохранён", "if issued separately": "если выпущен отдельно",
+  "manual": "вручную", "external": "продано вне бота",
+  "Stop-loss": "Стоп-лосс",
   "Date": "Дата", "β": "β", "TQS": "TQS",
   "General": "Общие", "Capital and market data": "Капитал и источник данных",
   "Screen 1 · statistics": "Экран 1 · статистика", "Correlation, cointegration, β and Z-score thresholds": "Пороги корреляции, коинтеграции, β и Z-score",
@@ -276,6 +286,7 @@ const FIELD_RU = {
   "stats.rolling_corr_window": ["Окно скользящей корреляции", "дней"],
   "stats.rolling_corr_lookback": ["Сравнение корреляции", "сравнить 60-дневную корреляцию со значением N дней назад"],
   "stats.breakdown_corr": ["Порог распада связи", "60-дневная корреляция ниже этого = связь распалась"],
+  "stats.max_rolling_corr_drop": ["Макс. падение корреляции", "нет входа, если 60-дневная корреляция упала сильнее (чек-лист: стабильна или растёт)"],
   "stats.coint_window": ["Окно коинтеграции", "дней"],
   "stats.coint_recalc_days": ["Пересчёт коинтеграции", "раз в N дней; в руководстве раз в неделю"],
   "stats.beta_window": ["Окно β", "дней"],
@@ -303,7 +314,7 @@ const FIELD_RU = {
   "risk.risk_per_trade": ["Риск на сделку", "0,5% новичок, 1% опытный, не выше 1,5%"],
   "risk.stop_pct": ["Стоп-лосс", "расстояние защитного стопа от цены входа"],
   "risk.take_profit_pct": ["Цель по прибыли", "необязательная фиксированная цель; 0 = выход только по Z"],
-  "risk.max_position_pct": ["Макс. размер позиции", "предел одной позиции в доле капитала"],
+  "risk.max_position_pct": ["Макс. размер позиции", "предел одной позиции в доле капитала (в примере руководства 50%)"],
   "risk.max_sector_risk": ["Риск на сектор", "совокупный риск по сектору"],
   "risk.daily_loss_limit": ["Дневной лимит убытка", "после него новые входы запрещены"],
   "risk.weekly_drawdown_limit": ["Недельный лимит просадки", "после него пауза и разбор"],
@@ -327,8 +338,6 @@ const FIELD_RU = {
 /* Messages produced by the bot itself (verdicts, pause reasons, errors) */
 const MSG_RU = [
   [/^config\.toml is invalid: /, "Ошибка в config.toml: "], [/^not saved: /, "Не сохранено: "],
-  [/risk\.risk_per_trade must be in \(0, 0\.02\]; the guide forbids more than 2%/, "риск на сделку должен быть в пределах (0, 0.02]: руководство запрещает риск выше 2%"],
-  [/risk\.stop_pct must be a fraction such as 0\.02/, "стоп-лосс задаётся долей, например 0.02"],
   [/config has no \[\[pairs\]\]/, "в настройках нет ни одной пары"],
   [/unknown option\(s\) in \[(\w+)\]: /, "неизвестные параметры в разделе [$1]: "],
   [/^([\w.]+): expected (\w+)$/, "$1: ожидается значение типа $2"],
@@ -377,6 +386,22 @@ const MSG_RU = [
   [/sector risk limit/g, "лимит риска на сектор"],
   [/not enough cash for one lot/g, "не хватает денег на один лот"],
   [/limit order not filled/g, "лимитная заявка не исполнена"],
+  [/rolling corr is falling \((-?[\d.]+) -> (-?[\d.]+)\)/g, "скользящая корреляция падает ($1 → $2)"],
+  [/stock is not trading now/g, "акция сейчас не торгуется"],
+  [/exits only/g, "только выходы"],
+  [/^no such position$/, "Такой позиции нет"],
+  [/^bad request.*$/, "Неверный запрос"],
+  [/^unknown section\(s\): /, "неизвестные разделы: "],
+  [/([\w.]+) must be in ([\[(][-\d.e+]+, [-\d.e+]+[\])])(; the guide forbids more than 2%)?/, (m, k, r, g) => `значение ${k} должно быть в диапазоне ${r}` + (g ? ": руководство запрещает риск выше 2%" : "")],
+  [/([\w.]+): (.+) is not a valid (\w+)/, "$1: недопустимое значение $2"],
+  [/(.+) is not a valid ticker \(capital letters and digits\)/, "$1: недопустимый тикер (заглавные латинские буквы и цифры)"],
+  [/pair (\S+): the two stocks must differ/, "пара $1: акции должны различаться"],
+  [/stats: extreme_z must be below entry_z, and entry_z below exit_z/, "экстремальный Z должен быть ниже Z входа, а Z входа ниже Z выхода"],
+  [/tqs\.reduced_min_score must not be above tqs\.min_score/, "порог уменьшенного объёма не может быть выше рабочего порога"],
+  [/live\.(session_start|session_end) must be a time such as 10:05/, "время сессии задаётся в виде 10:05"],
+  [/live\.session_start must be earlier than live\.session_end/, "начало сессии должно быть раньше конца"],
+  [/walkforward\.(\w+) must list at least one value/, "walk-forward: укажите хотя бы одно значение для $1"],
+  [/(\w+) trading is already running in another window/, "торговля в этом режиме уже запущена в другом окне"],
   [/BOUGHT (\d+) at ([\d.]+), stop ([\d.]+)/g, "КУПЛЕНО $1 по $2, стоп $3"],
 ];
 let LANG = localStorage.getItem("lang") || ((navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en");
@@ -520,7 +545,7 @@ VIEWS.dashboard = () => {
   const value = pos.reduce((s, p) => s + p.qty * last(p), 0);
   const upnl = pos.reduce((s, p) => s + p.qty * (last(p) - p.entry_price), 0);
   const paper = S.mode === "paper", cash = m.cash ?? cfg.general.capital;
-  const needToken = !paper && !o.token_set;
+  const needToken = S.mode === "live" ? !o.token_set : S.mode === "sandbox" ? !(o.token_set || o.sandbox_token_set) : false;
   let status;
   if (m.stopping) status = `<span class="dot wait"></span>${t("Stopping after the current cycle…")}`;
   else if (m.running) status = `<span class="dot on"></span>${t("Running")} <span class="muted">· ${o.in_session ? t("checks every {0} min", num(cfg.live.poll_seconds / 60, 0)) : t("waiting for the session ({0}–{1} Moscow)", esc(cfg.live.session_start), esc(cfg.live.session_end))}</span>`;
@@ -530,10 +555,14 @@ VIEWS.dashboard = () => {
     : `<button class="btn" data-act="start" data-once="1" ${needToken ? "disabled" : ""}>${t("Run one cycle")}</button><button class="btn primary" data-act="start" ${needToken ? "disabled" : ""}>${t(MODES[S.mode][2])}</button>`;
   const rows = pos.map(p => { const l = o.quotes[p.ticker], pnl = l == null ? null : p.qty * (l - p.entry_price); return `<tr>
       <td><b>${esc(p.ticker)}</b> <span class="muted">${t("vs")} ${esc(p.other)}</span></td><td class="n">${num(p.qty, 0)}</td><td class="n">${num(p.entry_price, 2)}</td>
-      <td class="n">${num(l, 2)}</td><td class="n">${num(p.stop, 2)}</td><td class="n ${tone(pnl)}">${signed(pnl)}</td>
-      <td class="n">${num(p.z_entry, 2)}</td><td class="n">${esc(p.tqs)}</td><td>${esc(p.entry_date)}</td></tr>`; }).join("");
+      <td class="n">${num(l, 2)}</td><td class="n">${num(p.stop, 2)}${!paper && !p.stop_order_id ? ` <span class="warn" title="${t("No stop order at the broker: the bot watches this stop itself, only while it is running.")}">●</span>` : ""}</td><td class="n ${tone(pnl)}">${signed(pnl)}</td>
+      <td class="n">${num(p.z_entry, 2)}</td><td class="n">${esc(p.tqs)}</td><td>${esc(p.entry_date)}</td>
+      <td class="n">${p.closing || m.closing.includes(p.ticker)
+        ? `<span class="badge warn">${t("closing")}</span>${p.closing ? "" : ` <button class="btn link small" data-act="unclosePos" data-v="${esc(p.ticker)}">${t("Cancel")}</button>`}`
+        : `<button class="btn small" data-act="closePos" data-v="${esc(p.ticker)}">${t("Close")}</button>`}</td></tr>`; }).join("");
   return `<div class="head"><h1>${t("Dashboard")}</h1>${seg}</div>
   ${m.error ? `<div class="banner bad"><div class="grow"><b>${t("The process stopped with an error")}</b><pre>${esc(tr(m.error))}</pre></div></div>` : ""}
+  ${m.pending ? `<div class="banner"><div class="grow"><b>${t("A buy order for {0} is being checked", esc(m.pending.ticker))}</b> <span class="muted">· ${t("Its result was not recorded. The bot settles it on the next cycle before opening anything new.")}</span></div></div>` : ""}
   ${rk.halt_until ? `<div class="banner"><div class="grow"><b>${t("New entries paused until {0}", esc(rk.halt_until))}</b> <span class="muted">· ${esc(tr(rk.halt_reason))}. ${t("Review the trades before resuming.")}</span></div><button class="btn small" data-act="resetHalt">${t("Clear pause")}</button></div>` : ""}
   <div class="card row"><div class="grow"><div>${status}</div>
       <div class="sub">${t(MODES[S.mode][1])}${needToken ? ` <a href="#/settings" class="warn">${t("Add a T-Bank token in Settings")}</a>, ${t("to use this mode.")}` : ""}${m.last_cycle ? " " + t("Last cycle {0}.", when(m.last_cycle)) : ""}</div></div>${buttons}</div>
@@ -543,7 +572,7 @@ VIEWS.dashboard = () => {
     <div class="card stat"><div class="k">${esc(t("Unrealised P&L"))}</div><div class="v ${tone(upnl)}">${signed(upnl)}</div><div class="h">${t("at the latest quotes")}</div></div>
     <div class="card stat"><div class="k">${t("Losses in a row")}</div><div class="v ${rk.consecutive_losses >= cfg.risk.max_consecutive_losses ? "bad" : ""}">${rk.consecutive_losses || 0} <span class="dim">/ ${cfg.risk.max_consecutive_losses}</span></div><div class="h">${t("risk per trade {0}%", num(cfg.risk.risk_per_trade * 100, 2))}</div></div>
   </div>
-  <div class="card flush"><h2>${t("Open positions")}</h2>${pos.length ? `<div class="tw"><table><thead><tr><th>${t("Stock")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry")}</th><th class="n">${t("Last")}</th><th class="n">${t("Stop")}</th><th class="n">${esc(t("P&L"))}</th><th class="n">${t("Z at entry")}</th><th class="n">TQS</th><th>${t("Opened")}</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">${t("No open positions in this mode.")}</div>`}</div>
+  <div class="card flush"><h2>${t("Open positions")}</h2>${pos.length ? `<div class="tw"><table><thead><tr><th>${t("Stock")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry")}</th><th class="n">${t("Last")}</th><th class="n">${t("Stop-loss")}</th><th class="n">${esc(t("P&L"))}</th><th class="n">${t("Z at entry")}</th><th class="n">TQS</th><th>${t("Opened")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty">${t("No open positions in this mode.")}</div>`}</div>
   <div class="card"><div class="row"><h2 class="grow">${t("Recent activity")}</h2><a class="btn link small" href="#/logs">${t("Full log")}</a></div>
     <div class="log short">${S.log.length ? esc(S.log.slice(-12).join("\n")) : `<span class="dim">${t("Nothing logged yet. Start trading or run one cycle.")}</span>`}</div></div>`;
 };
@@ -563,6 +592,22 @@ function liveModal(once) {
   $("#liveword").focus();
 }
 ACT.closeModal = () => { $("#modal").innerHTML = ""; };
+ACT.closePos = el => {
+  const ticker = el.dataset.v, live = S.mode === "live";
+  $("#modal").innerHTML = `<div class="modal"><div class="card"><h2>${t("Close {0}", esc(ticker))}</h2>
+    <p style="margin-top:0">${t("The whole position is sold at the market price and recorded in the journal as a manual exit.")} ${S.ov.in_session ? "" : t("The exchange session is closed, so the sale waits until trading is running during the session.")}</p>
+    ${live ? `<label class="f">${t("Type LIVE to confirm")}<input id="liveword" autocomplete="off"></label>` : ""}
+    <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="closeModal">${t("Cancel")}</button><button class="btn danger" data-act="closePosGo" data-v="${esc(ticker)}">${t("Close position")}</button></div></div></div>`;
+  if (live) $("#liveword").focus();
+};
+ACT.closePosGo = async el => {
+  const word = $("#liveword");
+  try {
+    const r = await api("/api/position/close", {mode: S.mode, ticker: el.dataset.v, confirm: word ? word.value.trim() : ""});
+    ACT.closeModal(); toast(r.now ? t("Closing {0}…", el.dataset.v) : t("Close request saved")); await refresh();
+  } catch (e) { fail(e); }
+};
+ACT.unclosePos = async el => { try { await api("/api/position/close", {mode: S.mode, ticker: el.dataset.v, cancel: true, confirm: "LIVE"}); await refresh(); } catch (e) { fail(e); } };
 ACT.startLive = async el => {
   try { await api("/api/trade/start", {mode: "live", once: !!el.dataset.once, confirm: $("#liveword").value.trim()}); ACT.closeModal(); toast(t("Started: {0}", t("Live"))); await refresh(); } catch (e) { fail(e); }
 };
@@ -623,7 +668,7 @@ ACT.pair = async el => {
 };
 
 /* ---------- backtest ---------- */
-const REASON = {stop: "bad", mean_reversion: "good", target: "good", pair_breakdown: "warn", time_stop: ""};
+const REASON = {stop: "bad", mean_reversion: "good", target: "good", pair_breakdown: "warn", time_stop: "", manual: "", external: "warn"};
 const reasonText = r => t(String(r).replace(/_/g, " "));
 const reason = r => `<span class="badge ${REASON[r] || ""}">${esc(reasonText(r))}</span>`;
 VIEWS.backtest = () => {
@@ -654,7 +699,7 @@ VIEWS.backtest = () => {
       ${b.trades.map(x => `<tr><td><b>${esc(x.bought)}</b> <span class="muted">${t("vs")} ${esc(x.pair.split("/")[1])}</span></td><td>${esc(x.entry_date)}</td><td>${esc(x.exit_date)}</td><td class="n">${x.days_held}</td><td class="n">${num(x.qty, 0)}</td><td class="n">${num(x.entry_price)}</td><td class="n">${num(x.exit_price)}</td><td class="n">${num(x.z_entry)}</td><td class="n">${x.tqs}</td><td>${reason(x.reason)}</td><td class="n ${tone(x.pnl)}">${signed(x.pnl)}</td></tr>`).join("")}</tbody></table></div></div>`;
     }
   } else if (!busy) out += `<div class="card empty">${t("Run a backtest to simulate the strategy on daily history with your current settings.")}</div>`;
-  if (w) out += `<div class="card flush"><h2>${t("Walk-forward")} · ${t("out-of-sample total")} <span class="${tone(w.total)}">${signed(w.total)}</span> · ${t("{0} data", esc(srcName(w.source)))}</h2>${w.folds.length ? `<div class="tw"><table><thead><tr><th>${t("Tuned on")}</th><th>${t("Tested on")}</th><th class="n">${t("Entry Z")}</th><th class="n">${t("Exit Z")}</th><th class="n">${t("Stop")}</th><th class="n">${t("Trades")}</th><th class="n">${t("Win rate")}</th><th class="n">${t("Max DD")}</th><th class="n">${t("Net profit")}</th></tr></thead><tbody>
+  if (w) out += `<div class="card flush"><h2>${t("Walk-forward")} · ${t("out-of-sample total")} <span class="${tone(w.total)}">${signed(w.total)}</span> · ${t("{0} data", esc(srcName(w.source)))}</h2>${w.folds.length ? `<div class="tw"><table><thead><tr><th>${t("Tuned on")}</th><th>${t("Tested on")}</th><th class="n">${t("Entry Z")}</th><th class="n">${t("Exit Z")}</th><th class="n">${t("Stop-loss")}</th><th class="n">${t("Trades")}</th><th class="n">${t("Win rate")}</th><th class="n">${t("Max DD")}</th><th class="n">${t("Net profit")}</th></tr></thead><tbody>
     ${w.folds.map(x => `<tr><td>${esc(x.train)}</td><td>${esc(x.test)}</td><td class="n">${num(x.entry_z)}</td><td class="n">${num(x.exit_z)}</td><td class="n">${num(x.stop_pct * 100, 1)}%</td><td class="n">${x.trades}</td><td class="n">${x.win_rate_pct == null ? "—" : num(x.win_rate_pct, 0) + "%"}</td><td class="n">${num(x.max_drawdown_pct)}%</td><td class="n ${tone(x.net_profit)}">${signed(x.net_profit)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">${t("Not enough history for one tuning window plus one test window.")}</div>`}</div>`;
   return out;
 };
@@ -689,7 +734,7 @@ VIEWS.journal = () => {
     <div class="card stat"><div class="k">${t("Result")}</div><div class="v ${tone(pnl)}">${signed(pnl)}</div></div>
     <div class="card stat"><div class="k">${t("Win rate")}</div><div class="v">${trades.length ? num(wins / trades.length * 100, 0) + "%" : "—"}</div></div>
     <div class="card stat"><div class="k">${t("Stopped out")}</div><div class="v">${trades.filter(x => x.reason === "stop").length}</div></div></div>
-  <div class="card flush"><h2>${t("Trades")}</h2>${trades.length ? `<div class="tw" style="max-height:460px"><table><thead><tr><th>${t("Mode")}</th><th>${t("Bought")}</th><th>${t("Entry")}</th><th>${t("Exit")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry price")}</th><th class="n">${t("Exit price")}</th><th class="n">${t("Stop")}</th><th class="n">${t("Z in")}</th><th class="n">${t("Z out")}</th><th class="n">TQS</th><th>${t("Exit reason")}</th><th class="n">${esc(t("P&L"))}</th></tr></thead><tbody>
+  <div class="card flush"><h2>${t("Trades")}</h2>${trades.length ? `<div class="tw" style="max-height:460px"><table><thead><tr><th>${t("Mode")}</th><th>${t("Bought")}</th><th>${t("Entry")}</th><th>${t("Exit")}</th><th class="n">${t("Qty")}</th><th class="n">${t("Entry price")}</th><th class="n">${t("Exit price")}</th><th class="n">${t("Stop-loss")}</th><th class="n">${t("Z in")}</th><th class="n">${t("Z out")}</th><th class="n">TQS</th><th>${t("Exit reason")}</th><th class="n">${esc(t("P&L"))}</th></tr></thead><tbody>
     ${trades.map(x => `<tr><td class="muted">${esc(MODES[x.mode] ? t(MODES[x.mode][0]) : x.mode)}</td><td><b>${esc(x.bought)}</b> <span class="muted">${t("vs")} ${esc((x.pair || "").split("/")[1])}</span></td><td>${esc(x.entry_date)}</td><td>${esc(x.exit_date)}</td><td class="n">${num(x.qty, 0)}</td><td class="n">${num(x.entry_price)}</td><td class="n">${num(x.exit_price)}</td><td class="n">${num(x.stop)}</td><td class="n">${num(x.z_entry)}</td><td class="n">${num(x.z_exit)}</td><td class="n">${esc(x.tqs)}</td><td>${reason(x.reason)}</td><td class="n ${tone(Number(x.pnl))}">${signed(Number(x.pnl))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">${t("No closed trades yet. Every trade the bot closes is recorded here.")}</div>`}</div>
   <div class="card flush"><div class="row" style="padding:16px 20px 0"><h2 class="grow" style="margin:0">${t("Pair passports")}</h2>${j.passports.length ? `<select onchange="loadPassport(this.value)"><option value="">${t("Choose a pair…")}</option>${j.passports.map(n => `<option ${pp && pp.name === n ? "selected" : ""} value="${esc(n)}">${esc(n.replace("_", " " + t("vs") + " "))}</option>`).join("")}</select>` : ""}</div>
     ${pp && pp.rows.length ? `<div class="tw" style="max-height:360px;margin-top:10px"><table><thead><tr>${Object.keys(pp.rows[0]).map((k, i) => `<th class="${i ? "n" : ""}">${esc(PASSPORT_COL[k] ? t(PASSPORT_COL[k]) : label(k))}</th>`).join("")}</tr></thead><tbody>${pp.rows.slice().reverse().map(r => `<tr>${Object.values(r).map((v, i) => `<td class="${i ? "n" : ""}">${esc(i && v !== "" && !isNaN(v) ? num(v, String(v).includes(".") ? 3 : 0) : v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<div class="empty">${j.passports.length ? t("Daily statistics of each pair, recorded while the bot trades.") : t("Passports appear after the bot has run at least one trading cycle.")}</div>`}</div>`;
@@ -724,10 +769,11 @@ VIEWS.settings = () => {
       <span class="sub grow">${has ? t("Stored in the .env file in the bot folder. It is never shown again here.") : t("Without a token the bot reads delayed public MOEX quotes and can only simulate. Create one in T-Investments → Settings → T-Invest API tokens.")}</span></div>
     <div class="row" style="align-items:flex-end">
       <label class="f grow">${has ? t("Replace token") : t("Token")}<input id="tok" type="password" autocomplete="off" placeholder="t.…"></label>
-      <label class="f">${t("Account ID")} <input id="acc" autocomplete="off" placeholder="${t("only with several accounts")}" style="width:240px"></label>
+      <label class="f">${t("Sandbox token")} <input id="stok" type="password" autocomplete="off" placeholder="${o && o.sandbox_token_set ? t("saved") : t("if issued separately")}" style="width:200px"></label>
+      <label class="f">${t("Account ID")} <input id="acc" autocomplete="off" placeholder="${o && o.account_id_set ? t("saved") : t("only with several accounts")}" style="width:200px"></label>
       <button class="btn primary" data-act="saveToken">${t("Save")}</button>
       <button class="btn" data-act="testToken" ${has ? "" : "disabled"}>${t("Test")}</button>
-      <button class="btn" data-act="testToken" data-sandbox="1" ${has ? "" : "disabled"}>${t("Test sandbox")}</button>
+      <button class="btn" data-act="testToken" data-sandbox="1" ${has || (o && o.sandbox_token_set) ? "" : "disabled"}>${t("Test sandbox")}</button>
       ${has ? `<button class="btn link" data-act="clearToken">${t("Remove")}</button>` : ""}</div>
     ${acc ? `<div style="margin-top:14px">${acc.length ? `<table><thead><tr><th>${t("Account")}</th><th>ID</th><th>${t("Type")}</th><th>${t("Access")}</th><th></th></tr></thead><tbody>${acc.map(a => `<tr><td>${esc(a.name || "—")}</td><td class="mono">${esc(a.id)}</td><td class="muted">${esc(String(a.type).replace("ACCOUNT_TYPE_", ""))}</td><td class="muted">${esc(String(a.access).replace("ACCOUNT_ACCESS_LEVEL_", ""))}</td><td class="n"><button class="btn small" data-act="useAccount" data-v="${esc(a.id)}">${t("Use this account")}</button></td></tr>`).join("")}</tbody></table>` : `<span class="sub">${t("Connected. No accounts yet: a sandbox account is opened automatically on the first sandbox run.")}</span>`}</div>` : ""}</div>`;
   if (c.error) out += `<div class="banner bad"><div><b>${t("config.toml has an error")}</b><pre>${esc(tr(c.error))}</pre>${t("Fix it in the file editor below.")}</div></div>`;
@@ -764,10 +810,9 @@ ACT.saveConfig = async () => {
 };
 ACT.saveRaw = async () => { try { saved(await api("/api/config/raw", {text: $("#raw").value}), t("File saved")); await refresh(); await ENTER.settings(); } catch (e) { fail(e); } };
 ACT.saveToken = async () => {
-  const body = {account_id: $("#acc").value.trim()};
-  if ($("#tok").value.trim()) body.token = $("#tok").value.trim();
-  if (!body.token && !body.account_id) return toast(t("Enter a token or an account ID"), true);
-  if (!body.account_id) delete body.account_id;
+  const body = {};
+  for (const [id, key] of [["tok", "token"], ["stok", "sandbox_token"], ["acc", "account_id"]]) if ($("#" + id).value.trim()) body[key] = $("#" + id).value.trim();
+  if (!Object.keys(body).length) return toast(t("Enter a token or an account ID"), true);
   try { await api("/api/token", body); toast(t("Saved")); await refresh(); render(); } catch (e) { fail(e); }
 };
 ACT.clearToken = async () => { try { await api("/api/token", {clear: true}); toast(t("Token removed")); S.accounts = null; await refresh(); render(); } catch (e) { fail(e); } };

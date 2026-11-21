@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 import secrets
 import subprocess
 import sys
@@ -93,8 +94,22 @@ class App:
             return {}
 
     def _running(self, mode: str) -> bool:
+        from .live import lock_is_fresh
+
         p = self.procs.get(mode)
-        return bool(p) and p.poll() is None
+        # The lock also shows a process started from the command line or by an earlier interface.
+        return (bool(p) and p.poll() is None) or lock_is_fresh(self.root / "state" / f"{mode}.lock")
+
+    def _beat(self) -> None:
+        """Trading processes started here stop by themselves once this file is no longer refreshed."""
+        alive = self.root / "state" / "ui.alive"
+        while True:
+            try:
+                alive.parent.mkdir(exist_ok=True)
+                alive.touch()
+            except OSError:
+                pass
+            time.sleep(3)
 
     def _proc_error(self, mode: str) -> str:
         p = self.procs.get(mode)
@@ -130,11 +145,13 @@ class App:
             modes[m] = {"running": running, "error": self._proc_error(m),
                         "stopping": running and (self.root / "state" / f"{m}.stop").exists(),
                         "positions": st.get("positions", []), "risk": st.get("risk", {}),
+                        "closing": self._close_requests(m), "pending": st.get("pending"),
                         "cash": st.get("cash"), "last_cycle": st.get("last_cycle")}
             held |= {p["ticker"] for p in modes[m]["positions"]}
         source = cfg.general.data_source
         return {"time": now.isoformat(timespec="seconds"), "in_session": in_session(cfg, now),
                 "token_set": bool(token), "account_id_set": bool(load_secret("TBANK_ACCOUNT_ID", self.root)),
+                "sandbox_token_set": bool(load_secret("TBANK_SANDBOX_TOKEN", self.root)),
                 "source": ("tbank" if token else "moex") if source == "auto" else source,
                 "modes": modes, "quotes": self._last_prices(cfg, held), "folder": str(self.root),
                 "config": {k: asdict(getattr(cfg, k)) for k in ("general", "stats", "tqs", "risk", "live", "costs")}}
@@ -252,20 +269,37 @@ class App:
             raise ApiError(f"{mode} is already running")
         if mode == "live" and body.get("confirm") != "LIVE":
             raise ApiError("live trading needs the typed confirmation")
-        if mode != "paper" and not load_secret("TBANK_TOKEN", self.root):
-            raise ApiError("add a T-Bank token in Settings first")
         self.cfg()
+        self._spawn(mode, bool(body.get("once")))
+        return {"ok": True}
+
+    def _has_token(self, mode: str) -> bool:
+        names = {"paper": [], "sandbox": ["TBANK_SANDBOX_TOKEN", "TBANK_TOKEN"], "live": ["TBANK_TOKEN"]}[mode]
+        return not names or any(load_secret(n, self.root) for n in names)
+
+    def _spawn(self, mode: str, once: bool, exits_only: bool = False) -> None:
+        if not self._has_token(mode):
+            raise ApiError("add a T-Bank token in Settings first")
+        with self.lock:  # two quick clicks must not start two processes
+            if self._running(mode):
+                raise ApiError(f"{mode} is already running")
+            self._spawn_locked(mode, once, exits_only)
+
+    def _spawn_locked(self, mode: str, once: bool, exits_only: bool) -> None:
         (self.root / "logs").mkdir(exist_ok=True)
         (self.root / "state").mkdir(exist_ok=True)
         (self.root / "state" / f"{mode}.stop").unlink(missing_ok=True)
+        (self.root / "state" / "ui.alive").touch()
         cmd = [sys.executable, str(ROOT / "bot.py"), "--config", str(self.cfg_file), mode]
         cmd += ["--confirm-real-money"] if mode == "live" else []
-        cmd += ["--once"] if body.get("once") else []
+        cmd += ["--once"] if once else []
+        cmd += ["--exits-only"] if exits_only else []
+        env = {**os.environ, "PAIRSBOT_UI_ALIVE": str(self.root / "state" / "ui.alive"),
+               "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
         with (self.root / "logs" / f"ui_{mode}.err").open("w", encoding="utf-8") as err:
             self.procs[mode] = subprocess.Popen(
-                cmd, cwd=self.root, stdout=subprocess.DEVNULL, stderr=err, stdin=subprocess.DEVNULL,
+                cmd, cwd=self.root, stdout=subprocess.DEVNULL, stderr=err, stdin=subprocess.DEVNULL, env=env,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-        return {"ok": True}
 
     def post_trade_stop(self, body: dict) -> dict:
         mode = body.get("mode")
@@ -275,7 +309,38 @@ class App:
         (self.root / "state" / f"{mode}.stop").write_text("stop", encoding="utf-8")
         return {"ok": True}
 
+    def _close_requests(self, mode: str) -> list:
+        path = self.root / "state" / f"{mode}.close"
+        try:
+            return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        except (OSError, ValueError):
+            return []
+
+    def post_position_close(self, body: dict) -> dict:
+        """Manual exit (the guide's fourth ground: the fundamentals changed). The bot sells on its next cycle."""
+        from .live import in_session, write_atomic
+
+        mode, ticker = body.get("mode"), body.get("ticker")
+        if mode not in MODES or ticker not in {p["ticker"] for p in self._state(mode).get("positions", [])}:
+            raise ApiError("no such position")
+        if mode == "live" and body.get("confirm") != "LIVE":
+            raise ApiError("live trading needs the typed confirmation")
+        path = self.root / "state" / f"{mode}.close"
+        if body.get("cancel"):
+            left = [t for t in self._close_requests(mode) if t != ticker]
+            write_atomic(path, json.dumps(left)) if left else path.unlink(missing_ok=True)
+            return {"ok": True}
+        write_atomic(path, json.dumps(sorted(set(self._close_requests(mode)) | {ticker})))
+        cfg, open_now = self.cfg(), False
+        if in_session(cfg, now_msk()):
+            open_now = True
+            if not self._running(mode):
+                self._spawn(mode, True, exits_only=True)  # sells only: a manual close never opens trades
+        return {"ok": True, "now": open_now}
+
     def post_risk_reset(self, body: dict) -> dict:
+        from .live import write_atomic
+
         mode = body.get("mode")
         path = self.root / "state" / f"{mode}.json"
         if mode not in MODES or not path.exists():
@@ -284,20 +349,21 @@ class App:
             raise ApiError("stop trading first, then clear the pause")
         state = json.loads(path.read_text(encoding="utf-8"))
         state.setdefault("risk", {}).update(halt_until="", halt_reason="", consecutive_losses=0)
-        path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+        write_atomic(path, json.dumps(state, indent=2, ensure_ascii=False))
         return {"ok": True}
 
     def shutdown(self) -> None:
-        running = [m for m in MODES if self._running(m)]
+        running = [m for m in MODES if self.procs.get(m) and self.procs[m].poll() is None]
         for m in running:
             (self.root / "state" / f"{m}.stop").write_text("stop", encoding="utf-8")
         if running:
-            print("Waiting for trading processes to finish their cycle ...")
+            print("Waiting for trading to finish its current cycle ...")
         for m in running:
             try:
-                self.procs[m].wait(timeout=200)
+                self.procs[m].wait(timeout=45)
             except subprocess.TimeoutExpired:
-                self.procs[m].terminate()
+                # Never killed in the middle of an order: it exits by itself when the cycle ends.
+                print(f"{m} trading is finishing an order and will stop by itself.")
 
     # ---- journal and logs ------------------------------------------------------------
     def get_journal(self, q: dict) -> dict:
@@ -349,8 +415,12 @@ class App:
 
     def post_config(self, body: dict) -> dict:
         text = self.cfg_file.read_text(encoding="utf-8")
+        values, pairs = body.get("values", {}), body.get("pairs", [])
+        if not isinstance(values, dict) or not all(isinstance(v, dict) for v in values.values()) \
+                or not isinstance(pairs, list) or not all(isinstance(p, dict) for p in pairs):
+            raise ApiError("bad request")
         try:
-            text = config_edit.set_values(text, config_edit.coerce(self.cfg(), body.get("values", {})))
+            text = config_edit.set_values(text, config_edit.coerce(self.cfg(), values))
         except ValueError as e:
             raise ApiError(str(e)) from None
         if "pairs" in body:
@@ -372,6 +442,8 @@ class App:
             updates["TBANK_TOKEN"] = str(body["token"]).strip()
         if body.get("clear"):
             updates["TBANK_TOKEN"] = ""
+        if "sandbox_token" in body:
+            updates["TBANK_SANDBOX_TOKEN"] = str(body["sandbox_token"] or "").strip()
         if "account_id" in body:
             updates["TBANK_ACCOUNT_ID"] = str(body["account_id"]).strip()
         if any(c in v for v in updates.values() for c in "\r\n\"' "):
@@ -387,10 +459,12 @@ class App:
         from .tbank import TBankClient, TBankError
 
         token = load_secret("TBANK_TOKEN", self.root)
+        if body.get("sandbox"):
+            token = load_secret("TBANK_SANDBOX_TOKEN", self.root) or token
         if not token:
             raise ApiError("no token saved")
         try:
-            accounts = TBankClient(token, sandbox=bool(body.get("sandbox")), root=ROOT).accounts()
+            accounts = TBankClient(token, sandbox=bool(body.get("sandbox"))).accounts()
         except TBankError as e:
             raise ApiError(str(e)) from None
         return {"accounts": [{"id": a.get("id"), "name": a.get("name", ""), "type": a.get("type", ""),
@@ -423,13 +497,20 @@ class Handler(BaseHTTPRequestHandler):
         fn = getattr(self.app, method.lower() + "_" + url.path.removeprefix("/api/").replace("/", "_"), None)
         if not url.path.startswith("/api/") or not fn:
             return self._send(404, b'{"error": "not found"}')
-        if not secrets.compare_digest(self.headers.get("X-Token", ""), self.app.token):
+        if not secrets.compare_digest(self.headers.get("X-Token", "").encode("utf-8", "replace"),
+                                      self.app.token.encode()):
             return self._send(403, b'{"error": "session expired, reload the page"}')
         try:
             arg = read_body() if method == "POST" else {k: v[0] for k, v in parse_qs(url.query).items()}
             self._send(200, json.dumps(clean(fn(arg)), ensure_ascii=False).encode("utf-8"))
         except ApiError as e:
             self._send(e.code, json.dumps({"error": str(e)}).encode("utf-8"))
+        except (TypeError, AttributeError, KeyError) as e:
+            if method != "POST":
+                raise
+            # A request of the wrong shape is the caller's mistake, not a server error.
+            self.app._log_error(traceback.format_exc())
+            self._send(400, json.dumps({"error": f"bad request: {type(e).__name__}"}).encode("utf-8"))
         except Exception as e:
             self.app._log_error(traceback.format_exc())
             self._send(500, json.dumps({"error": f"{type(e).__name__}: {e}"}).encode("utf-8"))
@@ -439,10 +520,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         def body():
-            raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
             try:
-                data = json.loads(raw or b"{}")
-            except ValueError:
+                size = int(self.headers.get("Content-Length") or 0)
+                if not 0 <= size <= 2_000_000:
+                    raise ValueError
+                data = json.loads(self.rfile.read(size) or b"{}")
+            except (ValueError, RecursionError):
                 raise ApiError("bad request") from None
             if not isinstance(data, dict):
                 raise ApiError("bad request")
@@ -470,6 +553,7 @@ def serve(config_path: str | None, port: int = 8791, open_browser: bool = True) 
     port = candidate
     Handler.hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
     url = f"http://127.0.0.1:{port}"
+    threading.Thread(target=app._beat, daemon=True).start()
     print(f"Interface: {url}\nKeep this window open while you use it. Press Ctrl+C to stop.")
     if open_browser:
         threading.Timer(0.6, webbrowser.open, [url]).start()

@@ -4,6 +4,8 @@ All candle frames are indexed by naive Moscow time and have open/high/low/close/
 """
 from __future__ import annotations
 
+import os
+import threading
 from datetime import date, datetime, timedelta, timezone
 
 import numpy as np
@@ -56,6 +58,10 @@ class TBankData:
 
     def order_book(self, ticker: str) -> tuple | None:
         return self.client.order_book(self.instrument(ticker)["uid"])
+
+    def tradable(self, ticker: str) -> bool | None:
+        s = self.client.trading_status(self.instrument(ticker)["uid"])
+        return s["status"] == "SECURITY_TRADING_STATUS_NORMAL_TRADING" and s["limit"] and s["market"] and s["api"]
 
 
 class MoexData:
@@ -112,10 +118,10 @@ class MoexData:
         df = _frame(rows)
         if interval == "1d" or df.empty:
             return df
-        # ISS has no 15-minute candles: build them from 1-minute ones and drop the unfinished last bar.
+        # ISS has no 15-minute candles: build them from 1-minute ones, without an unfinished last bar.
         agg = df.resample("15min").agg({"open": "first", "high": "max", "low": "min", "close": "last",
                                         "volume": "sum"}).dropna()
-        return agg.iloc[:-1]
+        return agg if df.index[-1].minute % 15 == 14 else agg.iloc[:-1]
 
     def last_prices(self, tickers: list) -> dict:
         out = {}
@@ -129,6 +135,9 @@ class MoexData:
     def order_book(self, ticker: str) -> tuple | None:
         b = self._board(ticker)
         return (float(b["BID"]), float(b["OFFER"])) if b.get("BID") and b.get("OFFER") else None
+
+    def tradable(self, ticker: str) -> bool | None:
+        return self._board(ticker).get("TRADINGSTATUS") == "T"
 
 
 class SyntheticData:
@@ -175,6 +184,9 @@ class SyntheticData:
     def order_book(self, ticker: str) -> tuple | None:
         return None
 
+    def tradable(self, ticker: str) -> bool | None:
+        return None  # unknown
+
 
 class DailyCache:
     """Daily candles cached in data/<source>_<ticker>.csv; only the recent tail is re-downloaded."""
@@ -191,7 +203,10 @@ class DailyCache:
         path = self.dir / f"{self.p.name}_{ticker}.csv"
         cached = pd.DataFrame(columns=COLS)
         if path.exists() and self.p.name != "synthetic":
-            cached = pd.read_csv(path, index_col=0, parse_dates=True)
+            try:
+                cached = pd.read_csv(path, index_col=0, parse_dates=True)[COLS].dropna()
+            except Exception:  # unreadable cache: download again
+                cached = pd.DataFrame(columns=COLS)
         if len(cached) and cached.index[0] <= pd.Timestamp(start_dt) + pd.Timedelta(days=7):
             fresh = self.p.candles(ticker, "1d", cached.index[-1].to_pydatetime() - timedelta(days=5), end_dt)
             df = pd.concat([cached, fresh])
@@ -199,7 +214,13 @@ class DailyCache:
             df = self.p.candles(ticker, "1d", start_dt, end_dt)
         df = df[~df.index.duplicated(keep="last")].sort_index()
         if self.p.name != "synthetic" and len(df):
-            df.to_csv(path)
+            # Unique temporary name: the interface and a trading process may refresh the cache together.
+            tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+            df.to_csv(tmp)
+            try:
+                os.replace(tmp, path)
+            except OSError:  # the other writer holds the file; its copy is just as fresh
+                tmp.unlink(missing_ok=True)
         if self.skip_weekends:
             df = df[df.index.day_of_week < 5]
         return df.loc[start_dt:end_dt]
@@ -212,7 +233,7 @@ def make_provider(cfg, token: str | None, source: str | None = None, sandbox: bo
     if source == "tbank":
         if not token:
             raise SystemExit("data source 'tbank' needs TBANK_TOKEN (environment variable or .env file)")
-        return TBankData(TBankClient(token, sandbox=sandbox, root=cfg.root), cfg.general.index_ticker)
+        return TBankData(TBankClient(token, sandbox=sandbox), cfg.general.index_ticker)
     if source == "moex":
         return MoexData(cfg.general.index_ticker)
     if source == "synthetic":

@@ -15,6 +15,8 @@ def statistical_screen(s: Snapshot, st) -> list:
         fails.append(f"corr {s.corr:.2f} <= {st.min_corr}")
     if s.rolling_state(st.breakdown_corr) == "breakdown":
         fails.append(f"rolling corr broke down ({s.corr_roll:.2f})")
+    elif s.corr_roll_prev - s.corr_roll > st.max_rolling_corr_drop:
+        fails.append(f"rolling corr is falling ({s.corr_roll_prev:.2f} -> {s.corr_roll:.2f})")
     if s.coint_p >= st.max_coint_pvalue:
         fails.append(f"not cointegrated (p={s.coint_p:.3f})")
     if s.beta <= 0:

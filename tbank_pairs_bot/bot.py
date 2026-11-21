@@ -63,6 +63,8 @@ def _engine(cfg, mode: str, source: str | None = None):
         factory = (lambda state: PaperExecutor(cfg, state)) if mode == "paper" else None
         return Engine(cfg, provider, mode, factory)
 
+    if mode == "sandbox":  # T-Bank issues separate sandbox tokens; fall back to the main one
+        token = load_secret("TBANK_SANDBOX_TOKEN", cfg.root) or token
     provider = make_provider(cfg, token, "tbank", sandbox=(mode == "sandbox"))
     client = provider.client
     accounts = client.accounts()
@@ -97,7 +99,8 @@ def cmd_trade(cfg, args) -> None:
         raise SystemExit("Live mode places real orders with real money.\n"
                          "Re-run with --confirm-real-money once paper / sandbox results satisfy you.")
     _setup_logging(cfg.root)
-    run_loop(_engine(cfg, args.command, getattr(args, "source", None)), once=args.once)
+    run_loop(_engine(cfg, args.command, getattr(args, "source", None)), once=args.once,
+             entries=not args.exits_only)
 
 
 def cmd_status(cfg, args) -> None:
@@ -107,8 +110,12 @@ def cmd_status(cfg, args) -> None:
         return
     state = json.loads(path.read_text(encoding="utf-8"))
     if args.reset_halt:
+        from pairsbot.live import lock_is_fresh, write_atomic
+
+        if lock_is_fresh(path.with_suffix(".lock")):
+            raise SystemExit("Stop the running bot first: it would overwrite the change.")
         state["risk"].update(halt_until="", halt_reason="", consecutive_losses=0)
-        path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+        write_atomic(path, json.dumps(state, indent=2, ensure_ascii=False))
         print("Trading pause cleared.")
     print(json.dumps(state, indent=2, ensure_ascii=False))
 
@@ -134,15 +141,18 @@ def main() -> None:
     p = sub.add_parser("paper", help="simulation on live quotes with a virtual account")
     p.add_argument("--source", choices=sources[:3])
     p.add_argument("--once", action="store_true", help="run a single cycle and exit")
+    p.add_argument("--exits-only", action="store_true", help="manage open positions, open no new ones")
     p.set_defaults(fn=cmd_trade)
 
     p = sub.add_parser("sandbox", help="trade in the T-Bank sandbox (test contour, no real money)")
     p.add_argument("--once", action="store_true")
+    p.add_argument("--exits-only", action="store_true")
     p.set_defaults(fn=cmd_trade)
 
     p = sub.add_parser("live", help="REAL orders on your T-Bank account")
     p.add_argument("--confirm-real-money", action="store_true")
     p.add_argument("--once", action="store_true")
+    p.add_argument("--exits-only", action="store_true")
     p.set_defaults(fn=cmd_trade)
 
     p = sub.add_parser("status", help="show saved positions and risk state")
@@ -155,6 +165,9 @@ def main() -> None:
     p.add_argument("--no-browser", action="store_true")
 
     args = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):  # a redirected Windows console may not encode every character
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     if args.command == "ui":  # the interface must open even when config.toml needs fixing
         from pairsbot.ui_server import serve
 

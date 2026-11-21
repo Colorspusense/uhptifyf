@@ -86,9 +86,24 @@ def coerce(cfg, values: dict) -> dict:
     return out
 
 
+def _depth(code: str) -> int:
+    """Unclosed '[' in a piece of TOML, ignoring brackets inside strings."""
+    depth, quote = 0, None
+    for ch in code:
+        if quote:
+            quote = None if ch == quote else quote
+        elif ch in "\"'":
+            quote = ch
+        else:
+            depth += (ch == "[") - (ch == "]")
+    return depth
+
+
 def set_values(text: str, values: dict) -> str:
-    lines, section, done = text.splitlines(), None, set()
+    lines, section, done, drop = text.splitlines(), None, set(), set()
     for i, line in enumerate(lines):
+        if i in drop:
+            continue
         h = _HEADER.match(line)
         if h:
             section = h.group(1)
@@ -97,13 +112,19 @@ def set_values(text: str, values: dict) -> str:
         if not m or section not in values or m.group(2) not in values[section]:
             continue
         key = m.group(2)
-        _, comment = _split_comment(m.group(4))
+        code, comment = _split_comment(m.group(4))
+        depth, j = _depth(code), i
+        while depth > 0 and j + 1 < len(lines):  # an array written over several lines is replaced whole
+            j += 1
+            drop.add(j)
+            depth += _depth(_split_comment(lines[j])[0])
         new = m.group(1) + key + m.group(3) + _fmt(values[section][key])
         if comment:
             col = line.index(comment)  # keep the comment where it was when the new value fits
             new = new.ljust(col) + comment if len(new) < col else new + "  " + comment
         lines[i] = new
         done.add((section, key))
+    lines = [line for i, line in enumerate(lines) if i not in drop]
     for section, items in values.items():
         missing = [k for k in items if (section, k) not in done]
         if not missing:
