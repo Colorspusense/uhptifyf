@@ -11,7 +11,7 @@ from pairsbot.config import ROOT, load_config
 from pairsbot.live import TBankExecutor, _Lock, lock_is_fresh, write_atomic
 from test_ui import server  # noqa: F401  (fixture)
 
-BASE = (ROOT / "config.toml").read_text(encoding="utf-8")
+BASE = (ROOT / "config.default.toml").read_text(encoding="utf-8")
 
 
 def load_with(tmp_path, old: str, new: str):
@@ -50,11 +50,11 @@ def test_invalid_config_is_rejected(tmp_path, old, new):
 
 def test_whole_numbers_are_accepted_for_fractions(tmp_path):
     assert load_with(tmp_path, "capital = 1000000.0", "capital = 500000").general.capital == 500000.0
-    assert load_config().risk.max_position_pct == 0.5 and load_config().stats.max_rolling_corr_drop == 0.05
+    assert load_config(ROOT / "config.default.toml").risk.max_position_pct == 0.5 and load_config(ROOT / "config.default.toml").stats.max_rolling_corr_drop == 0.05
 
 
 def test_config_edit_handles_awkward_but_valid_toml(tmp_path):
-    cfg = load_config()
+    cfg = load_config(ROOT / "config.default.toml")
     text = BASE.replace("entry_z = [-2.0, -2.25, -2.5]", "entry_z = [\n  -2.0,   # first\n  -2.25,\n]") \
                .replace("news_blackout = []", 'news_blackout = ["A#B"]  # has "quotes" and # hash') \
                .replace("\n", "\r\n")

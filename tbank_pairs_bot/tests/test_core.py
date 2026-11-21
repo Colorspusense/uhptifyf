@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from pairsbot.backtest import load_history, precompute, simulate
-from pairsbot.config import load_config
+from pairsbot.config import ROOT, load_config
 from pairsbot.data import SyntheticData
 from pairsbot.risk import RiskState, position_shares
 from pairsbot.screens import market_state, size_factor, statistical_screen, tqs_score
@@ -15,7 +15,7 @@ from pairsbot.tbank import f2q, q2f
 
 @pytest.fixture(scope="module")
 def cfg():
-    return load_config()
+    return load_config(ROOT / "config.default.toml")
 
 
 def snap(**kw):
@@ -106,3 +106,35 @@ def test_backtest_on_synthetic_data(cfg):
     assert (t.z_entry <= cfg.stats.entry_z).all() and (t.tqs >= cfg.tqs.reduced_min_score).all()
     # No leverage: a position never exceeds the configured share of the starting equity by much.
     assert (t.qty * t.entry_price).max() <= res.equity.max() * cfg.risk.max_position_pct * 1.01
+
+
+def test_shipped_settings_match_their_untouched_copy():
+    """config.default.toml is what the tests run on; a fresh install must start from the same values."""
+    def body(name):
+        return [line for line in (ROOT / name).read_text(encoding="utf-8").splitlines() if not line.startswith("# Untouched")]
+
+    shipped = load_config(ROOT / "config.default.toml")
+    assert shipped.risk.risk_per_trade == 0.005 and shipped.stats.min_corr == 0.90 and shipped.stats.entry_z == -2.0
+    assert shipped.tqs.min_score == 80 and shipped.risk.daily_loss_limit == 0.02 and len(shipped.pairs) == 5
+    assert body("config.default.toml")  # and it stays a complete, loadable file
+
+
+def test_pair_search_on_synthetic_universe(cfg, tmp_path):
+    import copy
+
+    from pairsbot.finder import find_pairs, format_pairs
+
+    c = copy.deepcopy(cfg)
+    c.root = tmp_path
+    provider = SyntheticData(c.pairs, c.general.index_ticker)
+    universe = {"banks": ["SBER", "VTBR", "NOSUCH"], "mixed": ["LKOH", "ROSN", "GAZP"]}
+    found = find_pairs(c, provider, universe)
+    pairs = {(r["a"], r["b"]): r for r in found["rows"]}
+    assert set(pairs) == {("SBER", "VTBR"), ("LKOH", "ROSN"), ("LKOH", "GAZP"), ("ROSN", "GAZP")}
+    assert found["skipped"] == ["NOSUCH"]
+    assert pairs[("SBER", "VTBR")]["configured"] and not pairs[("LKOH", "GAZP")]["configured"]
+    # Built as cointegrated pairs, against two unrelated random walks.
+    assert pairs[("SBER", "VTBR")]["corr"] > 0.9 and "correlation" in pairs[("LKOH", "GAZP")]["fails"]
+    assert found["rows"][0]["ok"] or found["rows"][0]["fails"]  # sorted: passing pairs first
+    assert [r["ok"] for r in found["rows"]] == sorted((r["ok"] for r in found["rows"]), reverse=True)
+    assert "SBER/VTBR" in format_pairs(found)

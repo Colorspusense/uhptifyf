@@ -1,0 +1,102 @@
+# Untouched copy of the shipped settings: compare with or copy over config.toml to start again.
+# Long-only statistical pairs trading (MOEX, T-Bank Invest API).
+# All thresholds below come from the guide; change them only deliberately.
+
+[general]
+capital = 1000000.0        # starting capital for backtest / paper mode, RUB
+data_source = "auto"       # auto | tbank | moex | synthetic  (auto = tbank if a token is set, else moex)
+skip_weekends = true       # ignore thin weekend sessions in the statistics
+index_ticker = "IMOEX"
+
+# Candidate pairs from the guide. The bot buys whichever leg is lagging.
+[[pairs]]
+a = "SBER"
+b = "VTBR"
+sector = "banks"
+
+[[pairs]]
+a = "LKOH"
+b = "ROSN"
+sector = "oil_gas"
+
+[[pairs]]
+a = "GAZP"
+b = "NVTK"
+sector = "oil_gas"
+
+[[pairs]]
+a = "NLMK"
+b = "MAGN"
+sector = "metals"
+
+[[pairs]]
+a = "CHMF"
+b = "NLMK"
+sector = "metals"
+
+[stats]
+min_history = 250              # trading days required
+corr_window = 120
+rolling_corr_window = 60
+rolling_corr_lookback = 20     # compare the 60-day correlation with its value N days ago
+breakdown_corr = 0.70          # 60-day correlation below this = relationship broke down
+max_rolling_corr_drop = 0.05   # no entry if the 60-day correlation fell by more than this (checklist: stable or rising)
+coint_window = 250
+coint_recalc_days = 5          # the guide re-tests cointegration weekly
+beta_window = 120
+beta_stability_lookback = 63   # ~3 months
+z_window = 120
+min_corr = 0.90
+max_coint_pvalue = 0.05
+max_beta_change = 0.10
+entry_z = -2.0
+extreme_z = -3.0
+allow_extreme_z = false        # Z below -3 needs a manual news check, so it is skipped by default
+require_z_turn = true          # do not buy while Z is still falling
+exit_z = -0.25                 # "Z approaches 0"
+breakdown_beta_change = 0.20   # exit if beta drifts more than this
+
+[entry]                        # third screen, 15-minute chart (live / paper modes)
+enabled = true
+min_bars = 250
+pullback_lookback = 12
+ema_touch_tolerance = 0.002
+long_candle_atr = 2.0          # last candle body above N x average range = "long candle", no entry
+require_pullback = true
+max_book_spread = 0.001        # bid/ask spread above 0.1% = order book not clean
+
+[tqs]
+min_score = 80
+reduced_min_score = 70         # 70-79 is allowed only with a reduced position
+reduced_size_factor = 0.5
+
+[risk]
+risk_per_trade = 0.005         # 0.5% beginner, 1% experienced, never above 1.5%
+stop_pct = 0.02                # protective stop distance from the entry price
+take_profit_pct = 0.0          # optional fixed profit target, 0 = exit on Z only
+max_position_pct = 0.50        # cap on one position as a share of equity (the guide's own example is 50%)
+max_sector_risk = 0.025
+daily_loss_limit = 0.02
+weekly_drawdown_limit = 0.05
+max_consecutive_losses = 3
+pause_days = 5                 # pause after the loss streak (or until `reset-halt`)
+max_holding_days = 0           # 0 = no time stop
+
+[costs]
+commission = 0.0005            # per side
+slippage = 0.0002              # simulation only
+
+[live]
+poll_seconds = 300
+session_start = "10:05"        # Moscow time, main session only
+session_end = "18:35"
+order_timeout_seconds = 120    # cancel an unfilled limit order after this
+place_broker_stop = true       # also register the stop-loss at the broker
+news_blackout = []             # tickers to skip today because of material news, e.g. ["GAZP"]
+
+[walkforward]
+train_days = 500
+test_days = 125
+entry_z = [-2.0, -2.25, -2.5]
+exit_z = [-0.5, -0.25, 0.0]
+stop_pct = [0.02, 0.03]

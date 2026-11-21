@@ -52,6 +52,16 @@ def cmd_walkforward(cfg, args) -> None:
     print(f"Out-of-sample total: {sum(f['net_profit'] for f in folds):,.2f} RUB over {len(folds)} window(s)")
 
 
+def cmd_pairs(cfg, args) -> None:
+    from pairsbot.finder import find_pairs, format_pairs
+
+    provider = make_provider(cfg, load_token(cfg.root), args.source)
+    if provider.name == "synthetic":
+        raise SystemExit("pair search needs market data: use --source moex or tbank")
+    print(f"Pair search on {provider.name} data (the first run downloads history for about 50 stocks) ...")
+    print(format_pairs(find_pairs(cfg, provider), args.top))
+
+
 def _engine(cfg, mode: str, source: str | None = None):
     from pairsbot.live import Engine, PaperExecutor, TBankExecutor
 
@@ -137,6 +147,11 @@ def main() -> None:
     p = sub.add_parser("scan", help="show today's statistics and signals for every pair, no orders")
     p.add_argument("--source", choices=sources[:3])
     p.set_defaults(fn=cmd_scan)
+
+    p = sub.add_parser("pairs", help="search liquid stocks for pairs that pass the statistical filters")
+    p.add_argument("--source", choices=sources[:3])
+    p.add_argument("--top", type=int, default=40, help="how many rows to print")
+    p.set_defaults(fn=cmd_pairs)
 
     p = sub.add_parser("paper", help="simulation on live quotes with a virtual account")
     p.add_argument("--source", choices=sources[:3])

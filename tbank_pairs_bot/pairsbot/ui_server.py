@@ -160,7 +160,7 @@ class App:
     # ---- background jobs: scan, backtest, walk-forward, pair history -------------------
     def post_jobs(self, body: dict) -> dict:
         kind = body.get("kind")
-        fn = {"scan": self._job_scan, "backtest": self._job_backtest, "walkforward": self._job_walkforward,
+        fn = {"scan": self._job_scan, "backtest": self._job_backtest, "walkforward": self._job_walkforward, "pairs": self._job_pairs,
               "pair": self._job_pair}.get(kind)
         if not fn:
             raise ApiError("unknown job")
@@ -239,6 +239,14 @@ class App:
         provider = self._provider(cfg, body.get("source"))
         folds = walk_forward(cfg, provider, _date(body.get("start")), _date(body.get("end")))
         return {"folds": folds, "source": provider.name, "total": sum(f["net_profit"] for f in folds)}
+
+    def _job_pairs(self, body: dict) -> dict:
+        from .finder import find_pairs
+
+        cfg = self.cfg()
+        if body.get("source") == "synthetic":
+            raise ApiError("synthetic data is only for backtests")
+        return find_pairs(cfg, self._provider(cfg, body.get("source")))
 
     def _job_pair(self, body: dict) -> dict:
         from .stats import z_history

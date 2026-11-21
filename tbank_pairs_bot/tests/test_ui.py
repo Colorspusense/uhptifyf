@@ -15,8 +15,8 @@ from pairsbot.ui_server import App, Handler
 
 def test_config_edit_keeps_comments_and_validates(tmp_path):
     path = tmp_path / "config.toml"
-    text = (ROOT / "config.toml").read_text(encoding="utf-8")
-    cfg = load_config(ROOT / "config.toml")
+    text = (ROOT / "config.default.toml").read_text(encoding="utf-8")
+    cfg = load_config(ROOT / "config.default.toml")
     values = config_edit.coerce(cfg, {"risk": {"risk_per_trade": "0.01", "max_consecutive_losses": 4.0},
                                       "stats": {"allow_extreme_z": True}, "live": {"news_blackout": ["GAZP"]},
                                       "walkforward": {"entry_z": [-2.0, -2.5]}})
@@ -38,7 +38,7 @@ def test_config_edit_keeps_comments_and_validates(tmp_path):
 
 @pytest.fixture
 def server(tmp_path):
-    shutil.copy(ROOT / "config.toml", tmp_path / "config.toml")
+    shutil.copy(ROOT / "config.default.toml", tmp_path / "config.toml")
     app = App(str(tmp_path / "config.toml"))
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     port = httpd.server_address[1]

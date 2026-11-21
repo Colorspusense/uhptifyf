@@ -2,7 +2,7 @@ import copy
 import csv
 
 import pairsbot.live as live
-from pairsbot.config import load_config
+from pairsbot.config import ROOT, load_config
 from pairsbot.data import SyntheticData
 from pairsbot.live import Engine, PaperExecutor
 
@@ -19,7 +19,7 @@ class FakeFeed(SyntheticData):
 
 
 def test_paper_engine_opens_and_stops_out(tmp_path, monkeypatch):
-    cfg = copy.deepcopy(load_config())
+    cfg = copy.deepcopy(load_config(ROOT / "config.default.toml"))
     cfg.root = tmp_path
     cfg.entry.enabled = False
     cfg.pairs = cfg.pairs[:1]

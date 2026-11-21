@@ -242,6 +242,13 @@ const RU = {
   "manual": "вручную", "external": "продано вне бота",
   "Stop-loss": "Стоп-лосс", "The bot was updated": "Бот обновлён",
   "Close the interface window and start ui.bat again to finish the update.": "Закройте окно интерфейса и снова запустите ui.bat, чтобы завершить обновление.",
+  "Pair search": "Поиск пар", "Search for pairs": "Найти пары", "Pair": "Пара", "Status": "Статус", "Signal days": "Дней с сигналом",
+  "Days in the last year with Z at or below the entry level, both directions": "Сколько дней за последний год Z был не выше уровня входа, в обе стороны",
+  "Downloading history for about 50 stocks and testing every same-sector pair. The first run takes a minute.": "Загружаем историю примерно по 50 акциям и проверяем каждую пару внутри сектора. Первый запуск занимает около минуты.",
+  "Checks liquid Moscow Exchange stocks, sector by sector, for pairs that meet the correlation, cointegration and β conditions today. The guide asks for this review monthly.": "Проверяет ликвидные акции МосБиржи по секторам и находит пары, которые сегодня проходят условия по корреляции, коинтеграции и β. Руководство требует такой пересмотр раз в месяц.",
+  "passes": "проходит", "does not pass": "не проходит", "in your list": "уже в списке", "Add to list": "Добавить", "{0} of {1} pairs pass today": "Сегодня проходят {0} из {1} пар",
+  "no history: {0}": "нет истории: {0}", "Show all {0}": "Показать все {0}", "{0} added to your pairs": "Пара {0} добавлена",
+  "correlation": "корреляция", "rolling correlation": "скользящая корреляция", "cointegration": "коинтеграция",
   "Date": "Дата", "β": "β", "TQS": "TQS",
   "General": "Общие", "Capital and market data": "Капитал и источник данных",
   "Screen 1 · statistics": "Экран 1 · статистика", "Correlation, cointegration, β and Z-score thresholds": "Пороги корреляции, коинтеграции, β и Z-score",
@@ -429,7 +436,7 @@ const MODES = {paper:["Paper","Simulated orders on live quotes with a virtual ac
                sandbox:["Sandbox","Orders go to the T-Bank sandbox. No real money.","Start sandbox trading"],
                live:["Live","Real orders on your T-Bank account.","Start live trading"]};
 const S = {page:"dashboard", mode:localStorage.getItem("mode")||"paper", ov:null, down:false, log:[],
-           scan:null, scanBusy:false, scanSource:"", pair:null, pairBusy:"",
+           scan:null, scanBusy:false, scanSource:"", pair:null, pairBusy:"", found:null, findBusy:false,
            bt:null, btBusy:false, wf:null, wfBusy:false, btForm:{source:"",start:"",end:""},
            journal:null, jMode:"all", passport:null, cfg:null, cfgPairs:[], accounts:null};
 
@@ -626,7 +633,8 @@ async function refresh() {
 
 /* ---------- scanner ---------- */
 const srcSelect = (value, synthetic, handler) => `<select onchange="${handler}">${[["", "Auto"], ["tbank", "T-Bank"], ["moex", "MOEX"]].concat(synthetic ? [["synthetic", "Synthetic demo"]] : []).map(([v, n]) => `<option value="${v}" ${value === v ? "selected" : ""}>${t(n)}</option>`).join("")}</select>`;
-VIEWS.scanner = () => {
+VIEWS.scanner = () => scannerMain() + finderCard();
+function scannerMain() {
   const sc = S.scan, st = S.ov && S.ov.config.stats, tq = S.ov && S.ov.config.tqs;
   const head = `<div class="head"><h1>${t("Scanner")}</h1>${sc ? `<span class="sub">${when(sc.time)} · ${t("{0} data", esc(srcName(sc.source)))}</span>` : ""}
     ${srcSelect(S.scanSource, false, "S.scanSource=this.value")}<button class="btn primary" data-act="scan" ${S.scanBusy ? "disabled" : ""}>${S.scanBusy ? `<span class="spin"></span>${t("Scanning…")}` : t("Run scan")}</button></div>`;
@@ -651,6 +659,43 @@ VIEWS.scanner = () => {
     ${S.pairBusy ? `<div class="card empty"><span class="spin"></span>${t("Loading {0} history…", esc(S.pairBusy))}</div>` : p ? `<div class="grid g2">
       <div class="card"><h2>${esc(p.buy)} ${t("vs")} ${esc(p.other)} · Z-score</h2><div class="legend"><span><i style="background:var(--good)"></i>${t("entry {0}", st.entry_z)}</span><span><i style="background:var(--muted)"></i>${t("exit {0}", st.exit_z)}</span></div><div class="chart" id="zchart"></div></div>
       <div class="card"><h2>${t("Price, start of period = 100")}</h2><div class="legend"><span><i style="background:var(--text)"></i>${esc(p.buy)}</span><span><i style="background:#6f8fd8"></i>${esc(p.other)}</span></div><div class="chart" id="pchart"></div></div></div>` : `<div class="sub">${t("Select a row to see the Z-score history of that pair.")}</div>`}`;
+};
+const FAIL = {correlation: "correlation", "rolling correlation": "rolling correlation", cointegration: "cointegration", beta: "β"};
+function finderCard() {
+  const f = S.found, st = S.ov && S.ov.config.stats;
+  let body;
+  if (S.findBusy) body = `<div class="empty"><span class="spin"></span>${t("Downloading history for about 50 stocks and testing every same-sector pair. The first run takes a minute.")}</div>`;
+  else if (!f || !st) body = `<div class="empty">${t("Checks liquid Moscow Exchange stocks, sector by sector, for pairs that meet the correlation, cointegration and β conditions today. The guide asks for this review monthly.")}</div>`;
+  else {
+    const rows = f.rows.slice(0, S.findAll ? 500 : 15).map(r => `<tr>
+      <td><b>${esc(r.a)}</b> / <b>${esc(r.b)}</b></td><td class="muted">${esc(r.sector)}</td>
+      <td class="n ${r.fails.includes("correlation") ? "bad" : ""}">${num(r.corr)}</td><td class="n ${r.fails.includes("rolling correlation") ? "bad" : ""}">${num(r.corr60)}</td>
+      <td class="n ${r.fails.includes("cointegration") ? "bad" : ""}">${num(r.coint_p, 3)}</td><td class="n ${r.fails.includes("beta") ? "bad" : ""}">${num(r.beta_chg * 100, 0)}%</td>
+      <td class="n">${r.half_life == null ? "∞" : num(r.half_life, 0)}</td><td class="n">${num(r.z_a)} / ${num(r.z_b)}</td><td class="n">${r.signal_days}</td>
+      <td>${r.ok ? `<span class="badge good">${t("passes")}</span>` : `<span class="muted" title="${esc(r.fails.map(x => t(FAIL[x] || x)).join(", "))}">${t("does not pass")}</span>`}</td>
+      <td class="n">${r.configured ? `<span class="muted">${t("in your list")}</span>` : `<button class="btn small" data-act="addFound" data-a="${esc(r.a)}" data-b="${esc(r.b)}" data-sector="${esc(r.sector)}">${t("Add to list")}</button>`}</td></tr>`).join("");
+    const ok = f.rows.filter(r => r.ok).length;
+    body = `<div class="sub" style="padding:0 20px 10px">${t("{0} of {1} pairs pass today", ok, f.rows.length)} · ${t("{0} data", esc(srcName(f.source)))}${f.skipped.length ? " · " + t("no history: {0}", esc(f.skipped.join(", "))) : ""}</div>
+      <div class="tw"><table><thead><tr><th>${t("Pair")}</th><th>${t("Sector")}</th><th class="n">${t("Corr 120d")}</th><th class="n">${t("Corr 60d")}</th><th class="n">${t("Coint. p")}</th><th class="n">${t("β change")}</th><th class="n">${t("Half-life")}</th><th class="n">${t("Z-score")}</th><th class="n" title="${t("Days in the last year with Z at or below the entry level, both directions")}">${t("Signal days")}</th><th>${t("Status")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${f.rows.length > 15 && !S.findAll ? `<div style="padding:10px 20px"><button class="btn link small" data-act="findAll">${t("Show all {0}", f.rows.length)}</button></div>` : ""}`;
+  }
+  return `<div class="card flush" style="margin-top:22px"><div class="row" style="padding:16px 20px 12px"><h2 class="grow" style="margin:0">${t("Pair search")}</h2><button class="btn" data-act="findPairs" ${S.findBusy ? "disabled" : ""}>${t("Search for pairs")}</button></div>${body}</div>`;
+}
+ACT.findPairs = async () => {
+  S.findBusy = true; render();
+  try { S.found = await job("pairs", {source: S.scanSource}); } catch (e) { fail(e); }
+  S.findBusy = false; if (S.page === "scanner") render();
+};
+ACT.findAll = () => { S.findAll = true; render(); };
+ACT.addFound = async el => {
+  const {a, b, sector} = el.dataset;
+  try {
+    const cfg = await api("/api/config");
+    if (cfg.error) throw new Error(cfg.error);
+    saved(await api("/api/config", {values: {}, pairs: cfg.pairs.concat([{a, b, sector}])}), t("{0} added to your pairs", a + "/" + b));
+    S.found.rows.forEach(r => { if (r.a === a && r.b === b) r.configured = true; });
+    S.cfg = null; render();
+  } catch (e) { fail(e); }
 };
 AFTER.scanner = () => {
   const p = S.pair, st = S.ov && S.ov.config.stats;

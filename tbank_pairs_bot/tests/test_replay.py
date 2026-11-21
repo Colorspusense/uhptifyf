@@ -8,7 +8,7 @@ import pytest
 
 import pairsbot.live as live
 from pairsbot.backtest import load_history, precompute, simulate
-from pairsbot.config import load_config
+from pairsbot.config import ROOT, load_config
 from pairsbot.data import SyntheticData
 from pairsbot.live import Engine, PaperExecutor
 
@@ -30,7 +30,7 @@ class Replay(SyntheticData):
 
 @pytest.fixture(scope="module")
 def replay(tmp_path_factory):
-    cfg = copy.deepcopy(load_config())
+    cfg = copy.deepcopy(load_config(ROOT / "config.default.toml"))
     cfg.root = tmp_path_factory.mktemp("replay")
     cfg.entry.enabled = False  # daily replay has no 15-minute bars
     cfg.pairs = cfg.pairs[:3]

@@ -7,7 +7,7 @@ import pytest
 
 import pairsbot.live as live
 from fake_tbank import FakeTBank
-from pairsbot.config import load_config
+from pairsbot.config import ROOT, load_config
 from pairsbot.data import TBankData
 from pairsbot.live import Engine, TBankExecutor
 from pairsbot.tbank import TBankClient, TBankError
@@ -15,7 +15,7 @@ from pairsbot.tbank import TBankClient, TBankError
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
-    cfg = copy.deepcopy(load_config())
+    cfg = copy.deepcopy(load_config(ROOT / "config.default.toml"))
     cfg.root = tmp_path
     cfg.entry.enabled = False
     cfg.pairs = cfg.pairs[:1]

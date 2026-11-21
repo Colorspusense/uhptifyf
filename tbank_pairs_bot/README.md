@@ -27,6 +27,7 @@ Open the folder in a terminal. The leading `.\` is required in PowerShell and al
 ```
 .\setup.bat                  one-time: creates .venv and installs the dependencies
 .\run.bat scan               today's statistics and signals for every pair, no orders
+.\run.bat pairs              search liquid stocks for pairs that pass the statistical filters
 .\run.bat backtest           simulation on daily history
 .\run.bat walkforward        walk-forward check of the main parameters
 .\run.bat paper              simulation on live quotes with a virtual account (Ctrl+C to stop)
@@ -85,6 +86,15 @@ three losses in a row (`.\run.bat status --reset-halt` clears the pause after yo
 
 Every closed trade goes to `journal/trades.csv`; daily pair statistics go to `journal/passports/`.
 
+## Choosing pairs
+
+The five pairs in `config.toml` are the guide's candidates, which it says must be verified on current
+data. On Moscow Exchange history up to November 2026 most of them do not meet the guide's own
+thresholds (for example Sber/VTB return correlation is about 0.7 against the required 0.9), so the bot
+rarely or never trades them. "Pair search" on the Scanner page (or `.\run.bat pairs`) tests about 50
+liquid stocks sector by sector and shows which pairs pass today; "Add to list" puts one into your
+settings. Run it monthly, as the guide requires, and backtest a pair before trading it.
+
 ## What stays manual
 
 The bot cannot read news. Put affected tickers into `live.news_blackout` in `config.toml`, and review
@@ -129,13 +139,14 @@ The backtest replays daily bars, so screen 3 is replaced by a daily proxy there.
 ```
 bot.py               command line
 ui.bat, ui.html      web interface (pairsbot/ui_server.py serves it)
-config.toml          every threshold
+config.toml          every threshold (config.default.toml is an untouched copy)
 pairsbot/stats.py    correlation, cointegration, beta, Z-score, half-life
 pairsbot/screens.py  three screens and TQS
 pairsbot/risk.py     position sizing and limits
 pairsbot/backtest.py backtest, metrics, walk-forward
 pairsbot/live.py     scan / paper / sandbox / live engine
 pairsbot/tbank.py    T-Bank Invest API client (REST)
+pairsbot/finder.py   pair search over a built-in list of liquid stocks
 pairsbot/data.py     T-Bank, MOEX ISS and synthetic data
 tests/               run with: .venv\Scripts\python -m pytest
 ```
