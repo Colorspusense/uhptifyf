@@ -16,7 +16,14 @@ _INTERVALS = {"1d": ("CANDLE_INTERVAL_DAY", 2000), "15m": ("CANDLE_INTERVAL_15_M
 
 
 class TBankError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int = 0, grpc_code: int = 0, api_code: str = ""):
+        super().__init__(message)
+        self.status, self.grpc_code, self.api_code = status, grpc_code, str(api_code)
+
+    @property
+    def not_found(self) -> bool:
+        """The broker does not know the requested object (gRPC NOT_FOUND / 50005 order not found)."""
+        return self.status == 404 or self.grpc_code == 5 or self.api_code == "50005"
 
 
 def q2f(q: dict | None) -> float:
@@ -72,12 +79,15 @@ class TBankClient:
                 time.sleep(float(r.headers.get("x-ratelimit-reset", 2 * (attempt + 1))))
                 continue
             if r.status_code != 200:
+                err = {}
                 try:
-                    err = r.json()
+                    err = r.json() if isinstance(r.json(), dict) else {}
                     msg = f"{err.get('message')} ({err.get('description')})"
                 except ValueError:
                     msg = r.text[:200]
-                raise TBankError(f"{method} failed, HTTP {r.status_code}: {msg}")
+                code = err.get("code")
+                raise TBankError(f"{method} failed, HTTP {r.status_code}: {msg}", r.status_code,
+                                 code if isinstance(code, int) else 0, err.get("description") or "")
             return r.json()
         raise TBankError(f"{method}: no successful response after retries")
 
@@ -138,19 +148,31 @@ class TBankClient:
                 "positions": {x["instrumentUid"]: q2f(x.get("quantity")) for x in p.get("positions", [])}}
 
     # ---- orders ----------------------------------------------------------------------
-    def post_order(self, account_id: str, uid: str, lots: int, buy: bool, price: float | None) -> str:
+    def post_order(self, account_id: str, uid: str, lots: int, buy: bool, price: float | None,
+                   key: str | None = None) -> str:
+        """key is the idempotency key: sending the same key again never creates a second order."""
         body = {"instrumentId": uid, "quantity": str(lots), "accountId": account_id,
                 "direction": "ORDER_DIRECTION_BUY" if buy else "ORDER_DIRECTION_SELL",
                 "orderType": "ORDER_TYPE_LIMIT" if price is not None else "ORDER_TYPE_MARKET",
-                "orderId": str(uuid.uuid4())}
+                "orderId": key or str(uuid.uuid4())}
         if price is not None:
             body["price"] = f2q(price)
         return self.call("OrdersService", "PostOrder", body)["orderId"]
 
-    def order_state(self, account_id: str, order_id: str) -> dict:
-        s = self.call("OrdersService", "GetOrderState", {"accountId": account_id, "orderId": order_id})
+    def order_state(self, account_id: str, order_id: str, by_request: bool = False) -> dict:
+        """by_request looks the order up by the idempotency key it was sent with."""
+        body = {"accountId": account_id, "orderId": order_id}
+        if by_request:
+            body["orderIdType"] = "ORDER_ID_TYPE_REQUEST"
+        s = self.call("OrdersService", "GetOrderState", body)
         return {"status": s.get("executionReportStatus", ""), "lots": int(s.get("lotsExecuted", 0)),
-                "avg_price": q2f(s.get("averagePositionPrice")), "commission": q2f(s.get("executedCommission"))}
+                "order_id": s.get("orderId", ""), "avg_price": q2f(s.get("averagePositionPrice")),
+                "commission": q2f(s.get("executedCommission"))}
+
+    def trading_status(self, uid: str) -> dict:
+        s = self.call("MarketDataService", "GetTradingStatus", {"instrumentId": uid})
+        return {"status": s.get("tradingStatus", ""), "limit": bool(s.get("limitOrderAvailableFlag")),
+                "market": bool(s.get("marketOrderAvailableFlag")), "api": bool(s.get("apiTradeAvailableFlag"))}
 
     def cancel_order(self, account_id: str, order_id: str) -> None:
         self.call("OrdersService", "CancelOrder", {"accountId": account_id, "orderId": order_id})
